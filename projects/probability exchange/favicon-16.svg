@@ -1,0 +1,7 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="16" height="16" rx="4" fill="#00B3FF"/>
+  
+  <!-- Simplified P/E path for 16x16 -->
+  <path d="M4,3 L12,3 L12,9 L6,9 L6,13 L4,13 Z M6,5 L6,7 L10,7 L10,5 Z" fill="#0a0f16"/>
+</svg>
