@@ -1,0 +1,13 @@
+{
+  "name": "waitlist_landing_page",
+  "version": "1.0.0",
+  "main": "api/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node express-server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
