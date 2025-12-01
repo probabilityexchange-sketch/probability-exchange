@@ -1,8 +1,33 @@
 [build]
-  command = "echo 'Static site - no build needed'"
-  publish = "."
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+
+# Netlify Forms Configuration
+[forms]
+  [[forms.waitlist]]
+    name = "waitlist"
+    from = "noreply@probex-markets.netlify.app"
+    to = "your-email@example.com"
+    subject = "🎉 New Probex Waitlist Signup! - {{ email }}"
+    template = "netlify-email-template.html"
+    
+    # Custom headers for better deliverability
+    [forms.waitlist.headers]
+      X-Priority = "1"
+      X-Mailer = "Probex Waitlist Form"
+      Reply-To = "{{ email }}"

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarketPulse Pro - Real-Time Prediction Markets Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: #ff4444;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .filter-select {
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .markets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .market-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .market-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .market-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .market-question {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            flex: 1;
+        }
+
+        .market-platform {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            color: #ffffff;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .market-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-value.up {
+            color: #00ff88;
+        }
+
+        .stat-value.down {
+            color: #ff4444;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .price-display {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .current-price {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .price-change {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .price-change.positive {
+            color: #00ff88;
+        }
+
+        .price-change.negative {
+            color: #ff4444;
+        }
+
+        .volume-bar {
+            background: rgba(255, 255, 255, 0.1);
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .volume-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            transition: width 0.3s ease;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            color: #ff4444;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .markets-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .search-input {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // API Client for FastAPI Backend
+        class APIClient {
+            constructor(baseUrl = 'http://localhost:8000') {
+                this.baseUrl = baseUrl;
+                this.apiBase = `${baseUrl}/api/v1`;
+                this.ws = null;
+                this.listeners = [];
+            }
+
+            async getMarkets(category = null, limit = 50) {
+                try {
+                    const params = new URLSearchParams({ limit });
+                    if (category) params.append('category', category);
+                    
+                    const response = await fetch(`${this.apiBase}/markets?${params}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching markets:', error);
+                    return { markets: [], total: 0, error: error.message };
+                }
+            }
+
+            async getMarketDetails(marketId) {
+                try {
+                    const response = await fetch(`${this.apiBase}/markets/${marketId}`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching market details:', error);
+                    return null;
+                }
+            }
+
+            async getApiStatus() {
+                try {
+                    const response = await fetch(`${this.apiBase}/status`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error fetching API status:', error);
+                    return { status: 'error', error: error.message };
+                }
+            }
+
+            connectWebSocket() {
+                try {
+                    this.ws = new WebSocket('ws://localhost:8000/api/v1/ws/markets');
+                    
+                    this.ws.onopen = () => {
+                        console.log('WebSocket connected');
+                        this.notifyListeners('connection', { connected: true });
+                    };
+
+                    this.ws.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            if (data.type === 'market_update') {
+                                this.notifyListeners('market_update', data.data);
+                            } else if (data.type === 'ack') {
+                                console.log('WebSocket acknowledgment received');
+                            }
+                        } catch (error) {
+                            console.error('Error parsing WebSocket message:', error);
+                        }
+                    };
+
+                    this.ws.onclose = () => {
+                        console.log('WebSocket disconnected');
+                        this.notifyListeners('connection', { connected: false });
+                        
+                        // Attempt to reconnect after 5 seconds
+                        setTimeout(() => {
+                            console.log('Attempting to reconnect WebSocket...');
+                            this.connectWebSocket();
+                        }, 5000);
+                    };
+
+                    this.ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        this.notifyListeners('connection', { connected: false, error: true });
+                    };
+
+                } catch (error) {
+                    console.error('Error connecting to WebSocket:', error);
+                    this.notifyListeners('connection', { connected: false, error: error.message });
+                }
+            }
+
+            addEventListener(type, callback) {
+                this.listeners.push({ type, callback });
+            }
+
+            notifyListeners(type, data) {
+                this.listeners.forEach(listener => {
+                    if (listener.type === type) {
+                        listener.callback(data);
+                    }
+                });
+            }
+
+            disconnect() {
+                if (this.ws) {
+                    this.ws.close();
+                    this.ws = null;
+                }
+            }
+        }
+
+        // Market Card Component
+        function MarketCard({ market, onSelect, isSelected }) {
+            const [priceChange, setPriceChange] = useState(null);
+            const previousPrice = useRef(market.current_price);
+
+            useEffect(() => {
+                if (market.current_price !== previousPrice.current) {
+                    const change = market.current_price - previousPrice.current;
+                    setPriceChange(change);
+                    previousPrice.current = market.current_price;
+                }
+            }, [market.current_price]);
+
+            const formatPrice = (price) => {
+                return price ? `$${price.toFixed(3)}` : 'N/A';
+            };
+
+            const formatVolume = (volume) => {
+                if (volume >= 1000000) return `$${(volume / 1000000).toFixed(1)}M`;
+                if (volume >= 1000) return `$${(volume / 1000).toFixed(1)}K`;
+                return `$${volume.toFixed(0)}`;
+            };
+
+            const getPriceChangeClass = () => {
+                if (priceChange > 0) return 'positive';
+                if (priceChange < 0) return 'negative';
+                return '';
+            };
+
+            const getPriceChangeSymbol = () => {
+                if (priceChange > 0) return '+';
+                if (priceChange < 0) return '';
+                return '';
+            };
+
+            return (
+                <div 
+                    className={`market-card ${isSelected ? 'selected' : ''}`}
+                    onClick={() => onSelect(market)}
+                >
+                    <div className="market-header">
+                        <div className="market-question">{market.question}</div>
+                        <div className="market-platform">{market.platform}</div>
+                    </div>
+                    
+                    <div className="price-display">
+                        <div className="current-price">{formatPrice(market.current_price)}</div>
+                        {priceChange !== null && (
+                            <div className={`price-change ${getPriceChangeClass()}`}>
+                                {getPriceChangeSymbol()}{priceChange.toFixed(3)}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="market-stats">
+                        <div className="stat-item">
+                            <div className="stat-value">{market.probability ? `${(market.probability * 100).toFixed(1)}%` : 'N/A'}</div>
+                            <div className="stat-label">Probability</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-value">{formatVolume(market.volume_24h)}</div>
+                            <div className="stat-label">24h Volume</div>
+                        </div>
+                    </div>
+
+                    <div className="volume-bar">
+                        <div 
+                            className="volume-fill" 
+                            style={{ width: `${Math.min((market.volume_24h / 10000) * 100, 100)}%` }}
+                        ></div>
+                    </div>
+
+                    <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)', marginTop: '10px' }}>
+                        {market.category} • {market.market_type}
+                    </div>
+                </div>
+            );
+        }
+
+        // Main Dashboard Component
+        function Dashboard() {
+            const [markets, setMarkets] = useState([]);
+            const [filteredMarkets, setFilteredMarkets] = useState([]);
+            const [selectedMarket, setSelectedMarket] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [categoryFilter, setCategoryFilter] = useState('');
+            const [apiStatus, setApiStatus] = useState(null);
+            const [wsConnected, setWsConnected] = useState(false);
+            
+            const apiClient = useRef(null);
+            const chartRef = useRef(null);
+            const priceChartRef = useRef(null);
+
+            // Initialize API client and load data
+            useEffect(() => {
+                apiClient.current = new APIClient();
+                loadMarkets();
+                loadApiStatus();
+                
+                // Connect WebSocket
+                apiClient.current.connectWebSocket();
+                
+                // Add event listeners
+                apiClient.current.addEventListener('connection', (data) => {
+                    setWsConnected(data.connected);
+                });
+                
+                apiClient.current.addEventListener('market_update', (marketData) => {
+                    updateMarketInList(marketData);
+                });
+
+                // Cleanup on unmount
+                return () => {
+                    if (apiClient.current) {
+                        apiClient.current.disconnect();
+                    }
+                };
+            }, []);
+
+            // Filter markets based on search and category
+            useEffect(() => {
+                let filtered = markets;
+                
+                if (searchTerm) {
+                    filtered = filtered.filter(market => 
+                        market.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        market.category.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                }
+                
+                if (categoryFilter) {
+                    filtered = filtered.filter(market => market.category === categoryFilter);
+                }
+                
+                setFilteredMarkets(filtered);
+            }, [markets, searchTerm, categoryFilter]);
+
+            const loadMarkets = async (category = categoryFilter) => {
+                setLoading(true);
+                setError(null);
+                
+                try {
+                    const data = await apiClient.current.getMarkets(category, 50);
+                    if (data.error) {
+                        setError(data.error);
+                    } else {
+                        setMarkets(data.markets || []);
+                    }
+                } catch (error) {
+                    setError(error.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const loadApiStatus = async () => {
+                try {
+                    const status = await apiClient.current.getApiStatus();
+                    setApiStatus(status);
+                } catch (error) {
+                    console.error('Error loading API status:', error);
+                }
+            };
+
+            const updateMarketInList = (updatedMarket) => {
+                setMarkets(currentMarkets => 
+                    currentMarkets.map(market => 
+                        market.id === updatedMarket.id 
+                            ? { ...market, ...updatedMarket }
+                            : market
+                    )
+                );
+            };
+
+            const handleMarketSelect = (market) => {
+                setSelectedMarket(market);
+                // Could load detailed chart data here
+            };
+
+            const getUniqueCategories = () => {
+                return [...new Set(markets.map(market => market.category).filter(Boolean))];
+            };
+
+            const getConnectionStatus = () => {
+                if (wsConnected) return { text: 'Connected', color: '#00ff88' };
+                return { text: 'Disconnected', color: '#ff4444' };
+            };
+
+            const connectionStatus = getConnectionStatus();
+
+            return (
+                <div className="container">
+                    {/* Header */}
+                    <div className="header">
+                        <h1><i className="fas fa-chart-line"></i> MarketPulse Pro</h1>
+                        <div className="status-bar">
+                            <div className="status-indicator">
+                                <div 
+                                    className={`status-dot ${!wsConnected ? 'disconnected' : ''}`}
+                                ></div>
+                                <span>WebSocket: {connectionStatus.text}</span>
+                            </div>
+                            <div className="status-indicator">
+                                <span>API: {apiStatus?.status === 'operational' ? 'Operational' : 'Error'}</span>
+                            </div>
+                            <div className="status-indicator">
+                                <span>Markets: {markets.length}</span>
+                            </div>
+                            <button 
+                                className="refresh-btn" 
+                                onClick={() => loadMarkets()}
+                                disabled={loading}
+                            >
+                                <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Controls */}
+                    <div className="controls">
+                        <input
+                            type="text"
+                            className="search-input"
+                            placeholder="Search markets..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <select
+                            className="filter-select"
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                        >
+                            <option value="">All Categories</option>
+                            {getUniqueCategories().map(category => (
+                                <option key={category} value={category}>
+                                    {category}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Error Display */}
+                    {error && (
+                        <div className="error">
+                            <i className="fas fa-exclamation-triangle"></i> {error}
+                        </div>
+                    )}
+
+                    {/* Loading State */}
+                    {loading && (
+                        <div className="loading">
+                            <i className="fas fa-spinner"></i>
+                            <div>Loading market data...</div>
+                        </div>
+                    )}
+
+                    {/* Markets Grid */}
+                    {!loading && filteredMarkets.length > 0 && (
+                        <div className="markets-grid">
+                            {filteredMarkets.map(market => (
+                                <MarketCard
+                                    key={market.id}
+                                    market={market}
+                                    onSelect={handleMarketSelect}
+                                    isSelected={selectedMarket?.id === market.id}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* No Results */}
+                    {!loading && filteredMarkets.length === 0 && (
+                        <div className="loading">
+                            <i className="fas fa-search"></i>
+                            <div>No markets found matching your criteria</div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Render the Dashboard
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

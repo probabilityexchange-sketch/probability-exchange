@@ -5,3 +5,5 @@ node_modules/
 nohup.out
 server.log
 *.Zone.Identifier
+.vercel
+.env*.local

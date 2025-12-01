@@ -22,42 +22,39 @@ logger = logging.getLogger(__name__)
 def load_probex_styles():
     st.markdown("""
     <style>
-        /* Import Inter font */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        /* Import IBM Plex Mono font */
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap');
         
         /* Root color variables */
         :root {
-            --bg-dark: #0a0f16;
-            --bg-surface: #141b26;
-            --brand-blue: #00B3FF;
-            --neon-cyan: #2EFFFA;
-            --terminal-gray: #7a8a99;
+            --bg-dark: #050505;
+            --bg-surface: #0A0A0A;
+            --brand-indigo: #6366f1;
+            --brand-purple: #9333ea;
             --text-white: #ffffff;
-            --ui-red: #FF3366;
+            --text-zinc: #a1a1aa;
+            --border-color: rgba(255, 255, 255, 0.1);
         }
         
         /* Main application background */
         .stApp {
             background-color: var(--bg-dark);
-            background-image: 
-                linear-gradient(rgba(46, 255, 250, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(46, 255, 250, 0.08) 1px, transparent 1px);
-            background-size: 60px 60px;
-            font-family: 'Inter', sans-serif;
+            font-family: 'IBM Plex Mono', monospace;
         }
         
         /* Header styling */
         .main-header {
             color: var(--text-white);
-            font-family: 'Inter', sans-serif;
+            font-family: 'IBM Plex Mono', monospace;
             font-weight: 700;
             font-size: 48px;
             margin-bottom: 1rem;
+            letter-spacing: -0.05em;
         }
         
         .main-subheader {
-            color: var(--terminal-gray);
-            font-family: 'Inter', sans-serif;
+            color: var(--text-zinc);
+            font-family: 'IBM Plex Mono', monospace;
             font-weight: 400;
             font-size: 18px;
             margin-bottom: 2rem;
@@ -71,93 +68,70 @@ def load_probex_styles():
             margin-bottom: 2rem;
         }
         
-        .logo-symbol {
-            background-color: var(--brand-blue);
-            color: var(--bg-dark);
-            width: 80px;
-            height: 80px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', sans-serif;
-            font-weight: 800;
-            font-size: 32px;
-            transform: skewY(-5deg);
-        }
-        
         .logo-text {
             color: var(--text-white);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.05em;
         }
         
-        .logo-text .bold {
+        .logo-text .highlight {
+            color: var(--text-zinc);
             font-weight: 600;
         }
         
-        .logo-text .light {
-            font-weight: 400;
-            color: var(--terminal-gray);
-        }
-        
         /* Sidebar styling */
-        .css-1d391kg {
+        .css-1d391kg, .css-1v3fvcr {
             background-color: var(--bg-surface);
-        }
-        
-        .css-1v3fvcr {
-            background-color: var(--bg-surface);
+            border-right: 1px solid var(--border-color);
         }
         
         /* Button styling */
         .stButton > button {
-            background-color: var(--brand-blue);
-            color: var(--bg-dark);
+            background-color: var(--text-white);
+            color: #000000;
             border: none;
-            border-radius: 6px;
-            font-family: 'Inter', sans-serif;
+            border-radius: 9999px;
+            font-family: 'IBM Plex Mono', monospace;
             font-weight: 500;
-            height: 48px;
+            height: 40px;
             transition: all 0.3s ease;
         }
         
         .stButton > button:hover {
-            background-color: var(--neon-cyan);
-            transform: translateY(-1px);
+            background-color: #e4e4e7;
+            transform: scale(1.02);
         }
         
         /* Secondary button */
         .secondary-btn button {
             background-color: transparent;
-            border: 2px solid var(--brand-blue);
-            color: var(--brand-blue);
+            border: 1px solid var(--border-color);
+            color: var(--text-white);
         }
         
         .secondary-btn button:hover {
-            background-color: var(--brand-blue);
-            color: var(--bg-dark);
+            background-color: rgba(255, 255, 255, 0.1);
         }
         
         /* Input styling */
         .stSelectbox > div > div {
             background-color: var(--bg-surface);
-            border: 2px solid var(--bg-surface);
-            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 9999px;
+            color: var(--text-white);
         }
         
         .stSelectbox > div > div:focus-within {
-            border-color: var(--neon-cyan);
-            box-shadow: 0 0 0 1px var(--neon-cyan);
+            border-color: rgba(255, 255, 255, 0.2);
         }
         
         /* Multi-select styling */
         .stMultiSelect > div > div {
             background-color: var(--bg-surface);
-            border: 2px solid var(--bg-surface);
-            border-radius: 6px;
-        }
-        
-        .stMultiSelect > div > div:focus-within {
-            border-color: var(--neon-cyan);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
         }
         
         /* Slider styling */
@@ -169,102 +143,108 @@ def load_probex_styles():
         .stMetric {
             background-color: var(--bg-surface);
             padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--brand-blue);
-            border-opacity: 0.3;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
         
         .stMetric label {
-            color: var(--terminal-gray);
-            font-family: 'Inter', sans-serif;
+            color: var(--text-zinc);
+            font-family: 'IBM Plex Mono', monospace;
             font-weight: 400;
         }
         
         .stMetric div {
             color: var(--text-white);
-            font-family: 'Inter', sans-serif;
+            font-family: 'IBM Plex Mono', monospace;
             font-weight: 600;
         }
         
         /* Tab styling */
         .stTabs [data-baseweb="tab-list"] {
-            background-color: var(--bg-surface);
-            border-radius: 8px 8px 0 0;
+            background-color: transparent;
+            border-bottom: 1px solid var(--border-color);
         }
         
         .stTabs [data-baseweb="tab"] {
             background-color: transparent;
-            color: var(--terminal-gray);
-            font-family: 'Inter', sans-serif;
+            color: var(--text-zinc);
+            font-family: 'IBM Plex Mono', monospace;
             font-weight: 500;
         }
         
         .stTabs [aria-selected="true"] {
-            background-color: var(--bg-dark) !important;
-            color: var(--brand-blue) !important;
+            color: var(--text-white) !important;
+            border-bottom: 2px solid var(--brand-indigo);
         }
         
         /* Dataframe styling */
         .stDataFrame {
             background-color: var(--bg-surface);
-            border-radius: 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
         
         /* Chart container styling */
         .plotly-graph-div {
             background-color: var(--bg-surface);
-            border-radius: 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
             padding: 1rem;
         }
         
         /* Success/Error message styling */
         .stSuccess {
-            background-color: rgba(46, 255, 250, 0.1);
-            color: var(--neon-cyan);
-            border: 1px solid var(--neon-cyan);
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 8px;
         }
         
         .stError {
-            background-color: rgba(255, 51, 102, 0.1);
-            color: var(--ui-red);
-            border: 1px solid var(--ui-red);
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
         }
         
         .stWarning {
-            background-color: rgba(255, 193, 7, 0.1);
-            color: #ffc107;
-            border: 1px solid #ffc107;
+            background-color: rgba(234, 179, 8, 0.1);
+            color: #facc15;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+            border-radius: 8px;
         }
         
         .stInfo {
-            background-color: rgba(0, 179, 255, 0.1);
-            color: var(--brand-blue);
-            border: 1px solid var(--brand-blue);
+            background-color: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
         }
         
         /* Custom classes for probability displays */
         .probability-yes {
-            color: var(--brand-blue);
+            color: #4ade80;
             font-weight: 600;
         }
         
         .probability-no {
-            color: var(--ui-red);
+            color: #f87171;
             font-weight: 600;
         }
         
         .high-confidence {
-            color: var(--neon-cyan);
+            color: #818cf8;
             font-weight: 600;
         }
         
         /* Terminal-style container */
         .terminal-container {
             background-color: var(--bg-surface);
-            border: 2px solid var(--bg-surface);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 20px;
             margin: 20px 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
     </style>
     """, unsafe_allow_html=True)
@@ -285,13 +265,17 @@ def create_probex_dashboard():
     # Header with logo
     header_html = """
     <div class="logo-container">
-        <div class="logo-symbol">P(E)</div>
         <div class="logo-text">
-            <span class="bold">probex</span><span class="light">.markets</span>
+            probex<span class="highlight">.markets</span>
         </div>
     </div>
-    <h1 class="main-header">Terminal Prediction Markets</h1>
-    <p class="main-subheader">Real-time intelligence from Polymarket, Kalshi, and Manifold • Dark mode terminal interface</p>
+    <h1 class="main-header">
+        Unlock the Future <br />
+        <span style="background: linear-gradient(to bottom, #ffffff, rgba(255,255,255,0.4)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            of Predictions.
+        </span>
+    </h1>
+    <p class="main-subheader">The next-generation prediction exchange platform.</p>
     """
     
     st.markdown(header_html, unsafe_allow_html=True)
@@ -486,13 +470,14 @@ def display_market_overview(markets_data: list, analysis_type: str):
             title="Probability Distribution",
             labels={'x': 'Probability', 'y': 'Number of Markets'},
             nbins=20,
-            color_discrete_sequence=['#00B3FF']
+            color_discrete_sequence=['#6366f1']
         )
         fig_prob.update_layout(
-            plot_bgcolor='#141b26',
-            paper_bgcolor='#141b26',
+            plot_bgcolor='#0A0A0A',
+            paper_bgcolor='#0A0A0A',
             font_color='#ffffff',
-            title_font_color='#ffffff'
+            title_font_color='#ffffff',
+            font_family='IBM Plex Mono'
         )
         st.plotly_chart(fig_prob, use_container_width=True)
     
@@ -506,13 +491,14 @@ def display_market_overview(markets_data: list, analysis_type: str):
             title="Volume by Source",
             labels={'volume': 'Volume ($)', 'source': 'Platform'},
             color='source',
-            color_discrete_sequence=['#00B3FF', '#2EFFFA', '#FF3366']
+            color_discrete_sequence=['#6366f1', '#9333ea', '#818cf8']
         )
         fig_volume.update_layout(
-            plot_bgcolor='#141b26',
-            paper_bgcolor='#141b26',
+            plot_bgcolor='#0A0A0A',
+            paper_bgcolor='#0A0A0A',
             font_color='#ffffff',
-            title_font_color='#ffffff'
+            title_font_color='#ffffff',
+            font_family='IBM Plex Mono'
         )
         st.plotly_chart(fig_volume, use_container_width=True)
     
@@ -541,13 +527,14 @@ def display_market_overview(markets_data: list, analysis_type: str):
         values=category_counts.values,
         names=category_counts.index,
         title="Markets by Category",
-        color_discrete_sequence=['#00B3FF', '#2EFFFA', '#FF3366', '#ffc107', '#28a745', '#17a2b8', '#6f42c1']
+        color_discrete_sequence=['#6366f1', '#9333ea', '#818cf8', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe']
     )
     fig_category.update_layout(
-        plot_bgcolor='#141b26',
-        paper_bgcolor='#141b26',
+        plot_bgcolor='#0A0A0A',
+        paper_bgcolor='#0A0A0A',
         font_color='#ffffff',
-        title_font_color='#ffffff'
+        title_font_color='#ffffff',
+        font_family='IBM Plex Mono'
     )
     st.plotly_chart(fig_category, use_container_width=True)
     
@@ -610,13 +597,14 @@ def display_signals_analysis(markets_data: list, analysis_type: str):
                 values=list(strength_counts.values()),
                 names=list(strength_counts.keys()),
                 title="Signal Strength Distribution",
-                color_discrete_sequence=['#00B3FF', '#2EFFFA', '#FF3366']
+                color_discrete_sequence=['#6366f1', '#9333ea', '#818cf8']
             )
             fig_strength.update_layout(
-                plot_bgcolor='#141b26',
-                paper_bgcolor='#141b26',
+                plot_bgcolor='#0A0A0A',
+                paper_bgcolor='#0A0A0A',
                 font_color='#ffffff',
-                title_font_color='#ffffff'
+                title_font_color='#ffffff',
+                font_family='IBM Plex Mono'
             )
             st.plotly_chart(fig_strength, use_container_width=True)
     
@@ -664,13 +652,14 @@ def display_cross_platform_analysis(markets_data: list, analysis_type: str):
             y='Market Count',
             title="Markets by Platform",
             color='Platform',
-            color_discrete_sequence=['#00B3FF', '#2EFFFA', '#FF3366']
+            color_discrete_sequence=['#6366f1', '#9333ea', '#818cf8']
         )
         fig_platforms.update_layout(
-            plot_bgcolor='#141b26',
-            paper_bgcolor='#141b26',
+            plot_bgcolor='#0A0A0A',
+            paper_bgcolor='#0A0A0A',
             font_color='#ffffff',
-            title_font_color='#ffffff'
+            title_font_color='#ffffff',
+            font_family='IBM Plex Mono'
         )
         st.plotly_chart(fig_platforms, use_container_width=True)
     
@@ -681,13 +670,14 @@ def display_cross_platform_analysis(markets_data: list, analysis_type: str):
             y='Total Volume',
             title="Volume by Platform",
             color='Platform',
-            color_discrete_sequence=['#00B3FF', '#2EFFFA', '#FF3366']
+            color_discrete_sequence=['#6366f1', '#9333ea', '#818cf8']
         )
         fig_volume.update_layout(
-            plot_bgcolor='#141b26',
-            paper_bgcolor='#141b26',
+            plot_bgcolor='#0A0A0A',
+            paper_bgcolor='#0A0A0A',
             font_color='#ffffff',
-            title_font_color='#ffffff'
+            title_font_color='#ffffff',
+            font_family='IBM Plex Mono'
         )
         st.plotly_chart(fig_volume, use_container_width=True)
     
@@ -788,13 +778,14 @@ def display_risk_assessment(markets_data: list, analysis_type: str):
         values=volume_shares.values,
         names=volume_shares.index,
         title="Volume Distribution by Platform",
-        color_discrete_sequence=['#00B3FF', '#2EFFFA', '#FF3366']
+        color_discrete_sequence=['#6366f1', '#9333ea', '#818cf8']
     )
     fig_concentration.update_layout(
-        plot_bgcolor='#141b26',
-        paper_bgcolor='#141b26',
+        plot_bgcolor='#0A0A0A',
+        paper_bgcolor='#0A0A0A',
         font_color='#ffffff',
-        title_font_color='#ffffff'
+        title_font_color='#ffffff',
+        font_family='IBM Plex Mono'
     )
     st.plotly_chart(fig_concentration, use_container_width=True)
     
@@ -824,17 +815,18 @@ def display_sample_dashboard():
         x=['Polymarket', 'Kalshi', 'Manifold'],
         y=[1200000, 850000, 650000],
         name='Volume ($)',
-        marker_color='#00B3FF'
+        marker_color='#6366f1'
     ))
     
     fig.update_layout(
         title="Sample Volume by Platform",
         xaxis_title="Platform",
         yaxis_title="Volume ($)",
-        plot_bgcolor='#141b26',
-        paper_bgcolor='#141b26',
+        plot_bgcolor='#0A0A0A',
+        paper_bgcolor='#0A0A0A',
         font_color='#ffffff',
-        title_font_color='#ffffff'
+        title_font_color='#ffffff',
+        font_family='IBM Plex Mono'
     )
     
     st.plotly_chart(fig, use_container_width=True)

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Probex Waitlist Signup</title>
+    <style>
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background-color: #050505;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            border-radius: 12px;
+            border: 1px solid #333;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .signup-info {
+            background: rgba(79, 70, 229, 0.1);
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .email {
+            font-size: 18px;
+            color: #4f46e5;
+            font-weight: bold;
+        }
+        .footer {
+            background: #0a0a0a;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">probex<span style="color: #999; font-weight: 600;">.markets</span></div>
+            <h2 style="margin: 0; color: white;">🎉 New Waitlist Signup!</h2>
+        </div>
+        
+        <div class="content">
+            <h3 style="color: white; margin-top: 0;">Welcome to the Future of Predictions</h3>
+            
+            <div class="signup-info">
+                <p style="margin: 0 0 10px 0;"><strong>New Email:</strong></p>
+                <p class="email">{{ email }}</p>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number">{{ submission_count }}</div>
+                    <div class="stat-label">Total Signups</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">{{ today_count }}</div>
+                    <div class="stat-label">Today</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">{{ conversion_rate }}%</div>
+                    <div class="stat-label">Conversion</div>
+                </div>
+            </div>
+            
+            <h4 style="color: white;">Submission Details:</h4>
+            <ul style="color: #ccc; line-height: 1.6;">
+                <li><strong>Email:</strong> {{ email }}</li>
+                <li><strong>Date:</strong> {{ timestamp }}</li>
+                <li><strong>IP Address:</strong> {{ ip }}</li>
+                <li><strong>User Agent:</strong> {{ user_agent }}</li>
+                <li><strong>Referrer:</strong> {{ referrer }}</li>
+            </ul>
+            
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; color: #22c55e;"><strong>✅ Next Steps:</strong></p>
+                <ol style="color: #ccc; margin: 10px 0;">
+                    <li>Add email to your email marketing platform</li>
+                    <li>Send welcome email to new subscriber</li>
+                    <li>Update waitlist count on landing page</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Generated automatically by Probex Waitlist Form</p>
+            <p>Powered by Netlify Forms • {{ date }}</p>
+        </div>
+    </div>
+</body>
+</html>
