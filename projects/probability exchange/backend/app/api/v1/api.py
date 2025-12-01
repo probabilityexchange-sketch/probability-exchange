@@ -34,12 +34,18 @@ from app.core.config_simple import settings
 # TODO: Enable after web3_wallets module is created
 # from .wallet_auth import wallet_router
 
+# Import news router
+from .news import news_router
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize API router
 api_router = APIRouter()
+
+# Include news routes
+api_router.include_router(news_router, tags=["news"])
 
 # Global aggregator instance (will be initialized on startup)
 market_aggregator: Optional[PredictionMarketAggregator] = None
