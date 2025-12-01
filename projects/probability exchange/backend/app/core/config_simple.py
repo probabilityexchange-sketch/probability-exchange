@@ -34,6 +34,11 @@ class Settings:
     swagger_ui: bool = True
     docs_url: str = "/docs"
 
+    # API Keys for external services
+    KALSHI_API_KEY: str = os.getenv("KALSHI_API_KEY", "")
+    POLYMARKET_API_KEY: str = os.getenv("POLYMARKET_API_KEY", "")
+    MANIFOLD_API_KEY: str = os.getenv("MANIFOLD_API_KEY", "")
+
     @property
     def is_development(self) -> bool:
         return self.environment.lower() == "development"

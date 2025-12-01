@@ -20,14 +20,19 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api_clients import (
-    PredictionMarketAggregator, 
-    MarketData, 
-    PolymarketClient, 
-    KalshiClient, 
+    PredictionMarketAggregator,
+    MarketData,
+    PolymarketClient,
+    KalshiClient,
     ManifoldClient,
     OrderRequest,
     OrderResponse
 )
+from app.core.config_simple import settings
+
+# Import wallet authentication router
+# TODO: Enable after web3_wallets module is created
+# from .wallet_auth import wallet_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -37,74 +42,149 @@ logger = logging.getLogger(__name__)
 api_router = APIRouter()
 
 # Global aggregator instance (will be initialized on startup)
-market_aggregator = None
+market_aggregator: Optional[PredictionMarketAggregator] = None
 
 async def get_market_aggregator() -> PredictionMarketAggregator:
     """Dependency to get the market aggregator instance"""
     global market_aggregator
     if market_aggregator is None:
         await initialize_aggregator()
+    if market_aggregator is None:
+        raise HTTPException(status_code=500, detail="Market aggregator not initialized")
     return market_aggregator
 
-async def initialize_aggregator():
-    """Initialize the prediction market aggregator with mock clients for demo"""
-    global market_aggregator
-    if market_aggregator is not None:
-        return
-    
-    logger.info("Initializing Prediction Market Aggregator...")
-    
-    # Create aggregator instance
-    market_aggregator = PredictionMarketAggregator()
-    
-    # For demo purposes, add mock clients (in production, use real API keys)
-    # polymarket_client = PolymarketClient(api_key="demo_key", base_url="https://gamma-api.polymarket.com")
-    # kalshi_client = KalshiClient(api_key="demo_key", base_url="https://trading-api.kalshi.com/v2")
-    # manifold_client = ManifoldClient(api_key="demo_key", base_url="https://api.manifold.markets/v0")
-    
-    # For demo, we'll create a mock client that returns sample data
-    class MockClient:
-        async def get_markets(self, category=None, limit=50):
-            """Return mock market data for demo"""
-            return [
-                MarketData(
-                    id=f"market_{i}",
-                    platform="polymarket",
-                    question=f"Will {['Bitcoin', 'Ethereum', 'Apple Stock', 'Gold', 'Oil'][i % 5]} increase by 10% this week?",
-                    description=f"Market about {['Bitcoin', 'Ethereum', 'Apple Stock', 'Gold', 'Oil'][i % 5]} price movement",
-                    category="crypto" if i % 2 == 0 else "stocks",
-                    current_price=0.45 + (i % 20) * 0.02,
-                    probability=0.45 + (i % 20) * 0.02,
-                    volume_24h=1000 + (i * 150),
-                    total_volume=5000 + (i * 300),
-                    liquidity=800 + (i * 100),
-                    status="open",
-                    last_updated=datetime.utcnow()
-                )
-                for i in range(limit)
-            ]
-        
-        async def get_market(self, market_id):
-            """Return mock market detail"""
-            return MarketData(
-                id=market_id,
-                platform="polymarket", 
-                question="Will Bitcoin increase by 10% this week?",
-                description="Market about Bitcoin price movement",
+class MockMarketClient:
+    """Mock client that returns sample market data for demo purposes"""
+
+    def __init__(self, platform: str):
+        self.platform = platform
+
+    async def get_markets(self, category: Optional[str] = None, limit: int = 50) -> List[MarketData]:
+        """Return mock market data"""
+        mock_markets = [
+            MarketData(
+                id=f"{self.platform}_btc_100k",
+                platform=self.platform,
+                question="Will Bitcoin reach $100,000 by end of 2025?",
+                description="Binary market on BTC price target",
                 category="crypto",
                 current_price=0.67,
                 probability=0.67,
-                volume_24h=2500,
-                total_volume=10000,
-                liquidity=2000,
+                volume_24h=125000,
+                total_volume=2500000,
+                liquidity=500000,
                 status="open",
+                url=f"https://{self.platform}.com/markets/btc-100k",
+                last_updated=datetime.utcnow()
+            ),
+            MarketData(
+                id=f"{self.platform}_eth_5k",
+                platform=self.platform,
+                question="Will Ethereum reach $5,000 by Q2 2025?",
+                description="ETH price prediction market",
+                category="crypto",
+                current_price=0.45,
+                probability=0.45,
+                volume_24h=85000,
+                total_volume=1200000,
+                liquidity=300000,
+                status="open",
+                url=f"https://{self.platform}.com/markets/eth-5k",
+                last_updated=datetime.utcnow()
+            ),
+            MarketData(
+                id=f"{self.platform}_election",
+                platform=self.platform,
+                question="2024 Presidential Election Winner",
+                description="Who will win the 2024 US Presidential Election?",
+                category="politics",
+                current_price=0.52,
+                probability=0.52,
+                volume_24h=450000,
+                total_volume=8500000,
+                liquidity=1200000,
+                status="open",
+                url=f"https://{self.platform}.com/markets/election-2024",
+                last_updated=datetime.utcnow()
+            ),
+            MarketData(
+                id=f"{self.platform}_ai_agi",
+                platform=self.platform,
+                question="Will AGI be achieved by 2027?",
+                description="General artificial intelligence development timeline",
+                category="technology",
+                current_price=0.23,
+                probability=0.23,
+                volume_24h=95000,
+                total_volume=1500000,
+                liquidity=400000,
+                status="open",
+                url=f"https://{self.platform}.com/markets/agi-2027",
+                last_updated=datetime.utcnow()
+            ),
+            MarketData(
+                id=f"{self.platform}_climate",
+                platform=self.platform,
+                question="Will global temperature rise exceed 1.5°C by 2030?",
+                description="Climate change prediction market",
+                category="climate",
+                current_price=0.78,
+                probability=0.78,
+                volume_24h=65000,
+                total_volume=950000,
+                liquidity=250000,
+                status="open",
+                url=f"https://{self.platform}.com/markets/climate-1-5c",
                 last_updated=datetime.utcnow()
             )
-    
-    # Add mock client to aggregator
-    market_aggregator.add_client("polymarket", MockClient())
-    
-    logger.info("Market Aggregator initialized with mock data")
+        ]
+
+        # Filter by category if specified
+        if category:
+            mock_markets = [m for m in mock_markets if m.category == category]
+
+        return mock_markets[:limit]
+
+    async def get_market(self, market_id: str) -> Optional[MarketData]:
+        """Get specific market by ID"""
+        markets = await self.get_markets()
+        for market in markets:
+            if market.id == market_id:
+                return market
+        return None
+
+async def initialize_aggregator():
+    """Initialize the prediction market aggregator with real or mock clients"""
+    global market_aggregator
+    if market_aggregator is not None:
+        return
+
+    market_aggregator = PredictionMarketAggregator()
+
+    # Check if we have API keys configured
+    has_api_keys = bool(settings.KALSHI_API_KEY or settings.POLYMARKET_API_KEY or settings.MANIFOLD_API_KEY)
+
+    if has_api_keys:
+        logger.info("Initializing Prediction Market Aggregator with real clients...")
+        kalshi = KalshiClient(api_key=settings.KALSHI_API_KEY, base_url="https://trading-api.kalshi.com/v2")
+        polymarket = PolymarketClient(api_key=settings.POLYMARKET_API_KEY, base_url="https://gamma-api.polymarket.com")
+        manifold = ManifoldClient(api_key=settings.MANIFOLD_API_KEY, base_url="https://api.manifold.markets/v0")
+
+        market_aggregator.add_client("kalshi", kalshi)
+        market_aggregator.add_client("polymarket", polymarket)
+        market_aggregator.add_client("manifold", manifold)
+        logger.info("Market Aggregator initialized with real clients")
+    else:
+        logger.warning("No API keys configured - using mock data for demo")
+        # Use mock clients for demo purposes
+        kalshi_mock = MockMarketClient("kalshi")
+        polymarket_mock = MockMarketClient("polymarket")
+        manifold_mock = MockMarketClient("manifold")
+
+        market_aggregator.add_client("kalshi", kalshi_mock)
+        market_aggregator.add_client("polymarket", polymarket_mock)
+        market_aggregator.add_client("manifold", manifold_mock)
+        logger.info("Market Aggregator initialized with mock clients for demo")
 
 # Market endpoints
 @api_router.get("/markets")
