@@ -377,15 +377,19 @@ async def compare_markets(
 # WebSocket endpoint for real-time updates
 class ConnectionManager:
     """Manages WebSocket connections for real-time updates"""
-    
+
     def __init__(self):
         self.active_connections: List[WebSocket] = []
-        self.market_updates = asyncio.create_task(self._broadcast_market_updates())
+        self.market_updates_task = None
     
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
         logger.info(f"WebSocket connected. Active connections: {len(self.active_connections)}")
+
+        # Start background task on first connection
+        if self.market_updates_task is None:
+            self.market_updates_task = asyncio.create_task(self._broadcast_market_updates())
     
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
