@@ -19,15 +19,70 @@ import os
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api_clients import (
+from api_client_integration import (
     PredictionMarketAggregator,
     MarketData,
-    PolymarketClient,
-    KalshiClient,
-    ManifoldClient,
+    PolymarketRealClient,
+    KalshiRealClient,
+    ManifoldRealClient,
     OrderRequest,
-    OrderResponse
+    OrderResponse,
+    APIConfig,
+    MockMarketClient
 )
+
+# Legacy client class names for backward compatibility
+class PolymarketClient:
+    def __init__(self, api_key: str = "", base_url: str = ""):
+        config = APIConfig(
+            api_key=api_key or settings.POLYMARKET_API_KEY or "",
+            base_url=base_url or "https://gamma-api.polymarket.com",
+            rate_limit=60
+        )
+        self._client = PolymarketRealClient(config)
+    
+    async def get_markets(self, category=None, limit=50):
+        try:
+            async with self._client:
+                return await self._client.get_markets(category, limit)
+        except Exception as e:
+            logger.error(f"Error fetching Polymarket markets: {e}")
+            return []
+
+class KalshiClient:
+    def __init__(self, api_key: str = "", base_url: str = ""):
+        config = APIConfig(
+            api_key=api_key or settings.KALSHI_API_KEY or "",
+            secret_key=settings.KALSHI_SECRET_KEY or None,
+            base_url=base_url or "https://trading-api.kalshi.com/v2",
+            rate_limit=100
+        )
+        self._client = KalshiRealClient(config)
+    
+    async def get_markets(self, category=None, limit=50):
+        try:
+            async with self._client:
+                return await self._client.get_markets(category, limit)
+        except Exception as e:
+            logger.error(f"Error fetching Kalshi markets: {e}")
+            return []
+
+class ManifoldClient:
+    def __init__(self, api_key: str = "", base_url: str = ""):
+        config = APIConfig(
+            api_key=api_key or settings.MANIFOLD_API_KEY or "",
+            base_url=base_url or "https://api.manifold.markets/v0",
+            rate_limit=60
+        )
+        self._client = ManifoldRealClient(config)
+    
+    async def get_markets(self, category=None, limit=50):
+        try:
+            async with self._client:
+                return await self._client.get_markets(category, limit)
+        except Exception as e:
+            logger.error(f"Error fetching Manifold markets: {e}")
+            return []
 from app.core.config_simple import settings
 
 # Import wallet authentication router
@@ -160,37 +215,46 @@ class MockMarketClient:
         return None
 
 async def initialize_aggregator():
-    """Initialize the prediction market aggregator with real or mock clients"""
+    """Initialize the prediction market aggregator with API configurations"""
     global market_aggregator
     if market_aggregator is not None:
         return
 
-    market_aggregator = PredictionMarketAggregator()
+    # Create API configurations for all platforms
+    api_configs = {
+        "kalshi": APIConfig(
+            api_key=settings.KALSHI_API_KEY or "",
+            base_url="https://trading-api.kalshi.com/v2",
+            rate_limit=60,
+            timeout=30
+        ),
+        "polymarket": APIConfig(
+            api_key=settings.POLYMARKET_API_KEY or "",
+            base_url="https://gamma-api.polymarket.com",
+            rate_limit=60,
+            timeout=30
+        ),
+        "manifold": APIConfig(
+            api_key=settings.MANIFOLD_API_KEY or "",
+            base_url="https://api.manifold.markets/v0",
+            rate_limit=60,
+            timeout=30
+        ),
+        "news": APIConfig(
+            api_key="",  # News API key not configured yet, will use mock data
+            base_url="https://newsapi.org/v2",
+            rate_limit=100,
+            timeout=30
+        )
+    }
 
-    # Check if we have API keys configured
-    has_api_keys = bool(settings.KALSHI_API_KEY or settings.POLYMARKET_API_KEY or settings.MANIFOLD_API_KEY)
+    # Initialize aggregator with configs
+    market_aggregator = PredictionMarketAggregator(api_configs)
 
-    if has_api_keys:
-        logger.info("Initializing Prediction Market Aggregator with real clients...")
-        kalshi = KalshiClient(api_key=settings.KALSHI_API_KEY, base_url="https://trading-api.kalshi.com/v2")
-        polymarket = PolymarketClient(api_key=settings.POLYMARKET_API_KEY, base_url="https://gamma-api.polymarket.com")
-        manifold = ManifoldClient(api_key=settings.MANIFOLD_API_KEY, base_url="https://api.manifold.markets/v0")
+    # Initialize all clients (real or mock based on API keys)
+    await market_aggregator.initialize_clients()
 
-        market_aggregator.add_client("kalshi", kalshi)
-        market_aggregator.add_client("polymarket", polymarket)
-        market_aggregator.add_client("manifold", manifold)
-        logger.info("Market Aggregator initialized with real clients")
-    else:
-        logger.warning("No API keys configured - using mock data for demo")
-        # Use mock clients for demo purposes
-        kalshi_mock = MockMarketClient("kalshi")
-        polymarket_mock = MockMarketClient("polymarket")
-        manifold_mock = MockMarketClient("manifold")
-
-        market_aggregator.add_client("kalshi", kalshi_mock)
-        market_aggregator.add_client("polymarket", polymarket_mock)
-        market_aggregator.add_client("manifold", manifold_mock)
-        logger.info("Market Aggregator initialized with mock clients for demo")
+    logger.info("Market Aggregator initialized successfully")
 
 # Market endpoints
 @api_router.get("/markets")
