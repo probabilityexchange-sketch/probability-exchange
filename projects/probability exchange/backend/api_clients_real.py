@@ -17,6 +17,7 @@ import aiohttp
 import time
 import logging
 import json
+import os
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta
@@ -24,6 +25,9 @@ from urllib.parse import urljoin
 import hashlib
 import hmac
 import base64
+
+# Import PolyRouter client
+from polyrouter_client import PolyRouterClient, create_polyrouter_client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -576,6 +580,12 @@ class RealPredictionMarketAggregator:
                     self.clients[platform] = KalshiRealClient(config)
                 elif platform == 'manifold':
                     self.clients[platform] = ManifoldRealClient(config)
+                elif platform == 'polyrouter':
+                    # Use the PolyRouter client
+                    self.clients[platform] = create_polyrouter_client(config.api_key)
+                    if self.clients[platform] is None:
+                        logger.warning("Failed to create PolyRouter client - no API key")
+                        continue
                 elif platform == 'dflow':
                     # Import DFlow client dynamically
                     try:
@@ -637,7 +647,28 @@ class RealPredictionMarketAggregator:
         """Safely get markets from a client"""
         try:
             async with client:
+                # Handle different client types
+                if hasattr(client, '__class__'):
+                    client_name = client.__class__.__name__
+
+                    # PolyRouter has different signature
+                    if client_name == 'PolyRouterClient':
+                        # PolyRouter expects categories as a list
+                        categories = [category] if category else None
+                        return await client.get_markets(categories=categories, limit=limit)
+
+                    # DFlow doesn't have get_markets - skip it
+                    elif client_name == 'DFlowAPIClient':
+                        logger.info("Skipping DFlow client for market data (trading-only client)")
+                        return []
+
+                    # Standard clients (Polymarket, Kalshi, Manifold)
+                    else:
+                        return await client.get_markets(category, limit)
+
+                # Fallback to standard call
                 return await client.get_markets(category, limit)
+
         except Exception as e:
             logger.error(f"Error getting markets from client: {e}")
             return []
@@ -695,6 +726,18 @@ def create_api_configs() -> Dict[str, APIConfig]:
             rate_limit=60
         )
 
+    # PolyRouter configuration (Multi-platform aggregator)
+    polyrouter_key = os.getenv('POLYROUTER_API_KEY', '')
+    if polyrouter_key:
+        configs['polyrouter'] = APIConfig(
+            api_key=polyrouter_key,
+            base_url='https://api.polyrouter.io/functions/v1',
+            rate_limit=10  # PolyRouter has 10 req/sec limit in open beta
+        )
+        logger.info("PolyRouter API integration enabled")
+    else:
+        logger.info("PolyRouter API key not found - add POLYROUTER_API_KEY to enable unified platform access")
+
     # DFlow configuration (Solana prediction markets)
     dflow_key = os.getenv('DFLOW_API_KEY', '')
     # DFlow may work without API key for public endpoints
@@ -727,6 +770,7 @@ async def test_real_apis():
         print("  POLYMARKET_API_KEY")
         print("  KALSHI_API_KEY, KALSHI_SECRET_KEY")
         print("  MANIFOLD_API_KEY")
+        print("  POLYROUTER_API_KEY (for unified multi-platform access)")
         print("  NEWS_API_KEY")
         return
     
