@@ -3,58 +3,44 @@
  */
 
 import { motion } from 'framer-motion';
-import { Activity } from 'lucide-react';
 
 export function Header() {
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="relative mb-6"
-    >
-      {/* Background Glow Effect */}
-      <div className="absolute -inset-1 bg-gradient-glow opacity-50 blur-3xl pointer-events-none" />
-
-      <div className="relative bg-dark-card/40 backdrop-blur-xl rounded-2xl border border-dark-border overflow-hidden">
-        {/* Subtle Top Border Accent */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary-500/50 to-transparent" />
-
-        <div className="px-8 py-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            {/* Logo Section */}
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary-500/20 blur-xl rounded-full" />
-                <div className="relative bg-gradient-primary p-2.5 rounded-xl">
-                  <Activity className="w-6 h-6 text-white" strokeWidth={2.5} />
-                </div>
-              </div>
-
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold font-mono tracking-tight">
-                  <span className="text-white">probex</span>
-                  <span className="text-zinc-600">.markets</span>
-                </h1>
-                <p className="text-sm text-zinc-500 font-medium mt-0.5">
-                  Real-Time Market Intelligence
-                </p>
-              </div>
-            </div>
-
-            {/* Live Indicator */}
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-dark-surface/80 border border-dark-border">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-500 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success-500" />
-              </span>
-              <span className="text-xs font-mono font-semibold text-success-500 uppercase tracking-wider">
-                Live
-              </span>
-            </div>
-          </div>
+    <header className="w-full pb-6 mb-8" style={{ margin: 0, padding: '0 0 1.5rem 0' }}>
+      <div className="flex items-center justify-between" style={{ margin: 0, padding: 0 }}>
+        {/* Logo - Matching waitlist style */}
+        <div className="flex items-center gap-2 cursor-pointer group">
+          <span className="text-2xl md:text-3xl font-['IBM_Plex_Mono'] font-bold tracking-tighter text-white group-hover:opacity-80 transition-opacity">
+            probex<span className="text-zinc-600 font-semibold tracking-tight">.markets</span>
+          </span>
         </div>
+
+        {/* Social Link - Matching waitlist style */}
+        <a
+          href="https://x.com/probabilityex"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors duration-300 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/5 hover:border-white/20"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
+          <span className="hidden md:inline font-medium">@probabilityex</span>
+        </a>
       </div>
-    </motion.header>
+
+      {/* Subtitle */}
+      <div className="mt-6">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">
+          Market Intelligence <br className="hidden sm:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">
+            Dashboard
+          </span>
+        </h1>
+        <p className="text-lg text-zinc-400 max-w-2xl">
+          Real-time prediction markets with AI-powered news analysis
+        </p>
+      </div>
+    </header>
   );
 }

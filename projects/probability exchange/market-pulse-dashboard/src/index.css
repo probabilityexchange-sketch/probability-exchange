@@ -7,19 +7,35 @@
 @layer base {
   * {
     @apply border-zinc-800;
+    margin: 0;
+    padding: 0;
   }
 
   body {
-    @apply font-sans antialiased bg-[#050505] text-white m-0 p-0;
+    @apply font-sans antialiased bg-[#050505] text-white;
+    margin: 0 !important;
+    padding: 0 !important;
+    overscroll-behavior: none;
   }
 
   html {
-    @apply scroll-smooth m-0 p-0;
+    @apply scroll-smooth;
+    margin: 0 !important;
+    padding: 0 !important;
+    overscroll-behavior: none;
   }
 
   #root {
-    @apply m-0 p-0;
+    margin: 0 !important;
+    padding: 0 !important;
   }
+}
+
+/* Override Solana wallet adapter styles */
+.wallet-adapter-modal-wrapper,
+.wallet-adapter-modal-container {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 @layer utilities {

@@ -149,7 +149,7 @@ function DashboardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white overflow-x-hidden m-0 p-0">
+    <div className="min-h-screen bg-dark-bg text-white overflow-x-hidden overflow-y-auto m-0 p-0" style={{ margin: 0, padding: 0, position: 'relative', top: 0 }}>
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary-500/10 rounded-full blur-[120px] opacity-60" />
@@ -175,8 +175,8 @@ function DashboardContent() {
       />
 
       {/* Main Content */}
-      <div className="relative z-10">
-        <div className="w-full px-4 sm:px-6 lg:px-8 pt-2 pb-8">
+      <div className="relative z-10" style={{ margin: 0, padding: 0 }}>
+        <div className="w-full px-4 sm:px-6 lg:px-8 pb-8" style={{ marginTop: 0, paddingTop: 0 }}>
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsSidebarOpen(true)}
