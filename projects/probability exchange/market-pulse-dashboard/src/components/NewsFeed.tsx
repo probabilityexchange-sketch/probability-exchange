@@ -21,7 +21,8 @@ export default function NewsFeed({ category, limit = 20, onBreakingNews }: NewsF
       if (selectedCategory) params.append('category', selectedCategory);
       params.append('limit', limit.toString());
 
-      const response = await fetch(`http://localhost:8000/api/v1/news?${params}`);
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${baseUrl}/api/v1/news?${params}`);
       if (!response.ok) throw new Error('Failed to fetch news');
       return response.json();
     },

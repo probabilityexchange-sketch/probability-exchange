@@ -17,6 +17,15 @@ export interface NewsArticle {
   related_markets: string[];
   category: string;
   is_breaking: boolean;
+  signal_score?: number;
+  impact_details?: {
+    market_name: string;
+    platform: string;
+    start_prob: number;
+    end_prob: number;
+    interpretation: string;
+    market_url: string;
+  }[];
 }
 
 export interface SentimentSummary {

@@ -19,6 +19,17 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class MarketTicker:
+    """Detailed market impact info"""
+    market_name: str
+    platform: str
+    start_prob: float
+    end_prob: float
+    interpretation: str
+    market_url: str = "#"
+
+
+@dataclass
 class NewsArticle:
     """News article with AI analysis"""
     id: str
@@ -35,6 +46,8 @@ class NewsArticle:
     related_markets: List[str]
     category: str
     is_breaking: bool
+    signal_score: int = 0  # 0-3 scale
+    impact_details: List[MarketTicker] = None
 
 
 class SentimentAnalyzer:
@@ -206,56 +219,79 @@ class NewsService:
                 'description': 'Major investment firms increase crypto allocations as Bitcoin approaches six-figure milestone. Analysts predict continued momentum.',
                 'source': 'Bloomberg',
                 'category': 'crypto',
-                'hours_ago': 1
+                'hours_ago': 1,
+                'tickers': [
+                    {'name': 'Bitcoin > $100k (2024)', 'platform': 'Polymarket', 'start': 0.35, 'end': 0.42, 'note': 'Institutional inflows driving confidence'}
+                ]
             },
             {
                 'title': 'Federal Reserve Signals Potential Rate Cut in Q2 2025',
                 'description': 'Fed Chair hints at easing monetary policy as inflation shows signs of moderating. Markets react positively to dovish tone.',
                 'source': 'Reuters',
                 'category': 'economy',
-                'hours_ago': 3
+                'hours_ago': 3,
+                'tickers': [
+                    {'name': 'Fed Rate Cut Q2 2025', 'platform': 'Kalshi', 'start': 0.45, 'end': 0.60, 'note': 'Dovish comments increased cut probability'}
+                ]
             },
             {
                 'title': 'OpenAI Announces Major Breakthrough in AGI Research',
                 'description': 'Company reveals new AI model with reasoning capabilities approaching human-level performance. Experts debate timeline to AGI.',
                 'source': 'TechCrunch',
                 'category': 'technology',
-                'hours_ago': 5
+                'hours_ago': 5,
+                'tickers': [
+                    {'name': 'AGI by 2026', 'platform': 'Manifold', 'start': 0.20, 'end': 0.35, 'note': 'New model release accelerated timelines'}
+                ]
             },
             {
                 'title': '2024 Election Polls Show Tight Race in Key Swing States',
                 'description': 'Latest polling data reveals narrow margins in Pennsylvania, Michigan, and Arizona. Analysts call it too close to call.',
                 'source': 'Associated Press',
                 'category': 'politics',
-                'hours_ago': 2
+                'hours_ago': 2,
+                'tickers': [
+                    {'name': 'Presidential Winner 2024', 'platform': 'Polymarket', 'start': 0.49, 'end': 0.51, 'note': 'Swing state polls tightened margin'},
+                    {'name': 'PA Winner', 'platform': 'Polymarket', 'start': 0.48, 'end': 0.48, 'note': 'Dead heat in PA'}
+                ]
             },
             {
                 'title': 'Global Temperatures Set New Record High in 2024',
                 'description': 'Climate scientists confirm 1.5°C warming threshold may be breached earlier than expected. Urgent action calls intensify.',
                 'source': 'BBC',
                 'category': 'climate',
-                'hours_ago': 6
+                'hours_ago': 6,
+                'tickers': [
+                     {'name': 'Avg Temp > 1.5C Increase', 'platform': 'Kalshi', 'start': 0.70, 'end': 0.85, 'note': 'New data confirms warming trend'}
+                ]
             },
             {
                 'title': 'Ethereum Upgrade Promises 10x Speed Improvement',
                 'description': 'Upcoming network upgrade expected to dramatically increase transaction throughput. Developer community optimistic.',
                 'source': 'CoinDesk',
                 'category': 'crypto',
-                'hours_ago': 4
+                'hours_ago': 4,
+                'tickers': [
+                    {'name': 'ETH > $4k by June', 'platform': 'Polymarket', 'start': 0.25, 'end': 0.30, 'note': 'Technical upgrade boosts sentiment'}
+                ]
             },
             {
                 'title': 'Major Tech Layoffs Announced Across Silicon Valley',
                 'description': 'Leading technology companies announce workforce reductions citing economic uncertainty and AI automation.',
                 'source': 'Wall Street Journal',
                 'category': 'technology',
-                'hours_ago': 8
+                'hours_ago': 8,
+                'tickers': []
             },
             {
                 'title': 'Oil Prices Drop 15% on Demand Concerns',
                 'description': 'Global oil markets see sharp decline as economic growth forecasts are revised downward. OPEC considers production cuts.',
                 'source': 'Financial Times',
                 'category': 'economy',
-                'hours_ago': 12
+                'hours_ago': 12,
+                'tickers': [
+                     {'name': 'Oil < $70/bbl EOY', 'platform': 'Kalshi', 'start': 0.40, 'end': 0.65, 'note': 'Demand shock driving prices down'}
+                ]
             }
         ]
 
@@ -278,9 +314,37 @@ class NewsService:
                 sentiment_score, credibility, mock['hours_ago']
             )
 
+            # Determine if breaking
+            is_breaking = mock['hours_ago'] < 2
+
+            # Calculate signal score (0-3)
+            # High impact + breaking = 3
+            # High impact OR (Medium impact + breaking) = 2
+            # Medium impact = 1
+            # Low impact = 0
+            if impact_score > 0.7 and is_breaking:
+                signal_score = 3
+            elif impact_score > 0.7 or (impact_score > 0.4 and is_breaking):
+                signal_score = 2
+            elif impact_score > 0.3:
+                signal_score = 1
+            else:
+                signal_score = 0
+
+            # Create impact details
+            impact_details = []
+            if 'tickers' in mock:
+                for t in mock['tickers']:
+                    impact_details.append(MarketTicker(
+                        market_name=t['name'],
+                        platform=t['platform'],
+                        start_prob=t['start'],
+                        end_prob=t['end'],
+                        interpretation=t['note']
+                    ))
+
             # Create article
             published_at = datetime.utcnow() - timedelta(hours=mock['hours_ago'])
-            is_breaking = mock['hours_ago'] < 2
 
             article = NewsArticle(
                 id=f"mock_{i}",
@@ -296,7 +360,9 @@ class NewsService:
                 predicted_direction=direction,
                 related_markets=related_markets,
                 category=primary_category,
-                is_breaking=is_breaking
+                is_breaking=is_breaking,
+                signal_score=signal_score,
+                impact_details=impact_details
             )
             articles.append(article)
 

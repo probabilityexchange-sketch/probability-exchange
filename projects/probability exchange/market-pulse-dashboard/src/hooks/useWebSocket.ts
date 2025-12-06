@@ -23,31 +23,18 @@ export function useWebSocket(
 
   useEffect(() => {
     // Initialize WebSocket manager
-    wsManager.current = new WebSocketManager(url);
-
-    // Set up connection handler
-    const cleanupConnection = wsManager.current.onConnection(
-      (isConnected, hasError) => {
-        setConnected(isConnected);
-        setError(hasError || false);
-      }
-    );
-
-    // Set up message handler
-    const cleanupMessage = wsManager.current.onMessage((market) => {
-      setLastMessage(market);
-      if (onMessage) {
-        onMessage(market);
-      }
+    // Pass onMessage callback to constructor as per our mock implementation
+    const manager = new WebSocketManager(url || 'ws://localhost:8000/ws', (data) => {
+         setLastMessage(data);
+         if (onMessage) onMessage(data);
     });
 
-    // Connect
-    wsManager.current.connect();
+    manager.connect();
+    wsManager.current = manager;
+    setConnected(true);
 
     // Cleanup on unmount
     return () => {
-      cleanupConnection();
-      cleanupMessage();
       if (wsManager.current) {
         wsManager.current.disconnect();
       }

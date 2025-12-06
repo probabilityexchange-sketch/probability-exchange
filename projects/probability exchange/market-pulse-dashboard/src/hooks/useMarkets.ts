@@ -11,7 +11,7 @@ export function useMarkets(category?: string | null, limit: number = 50) {
 
   const query = useQuery<MarketsResponse>({
     queryKey: ['markets', category, limit],
-    queryFn: () => apiClient.getMarkets(category, limit),
+    queryFn: () => apiClient.getMarkets({ category, limit }),
     staleTime: 30000, // Consider data stale after 30 seconds
     refetchInterval: 60000, // Refetch every 60 seconds
   });
@@ -40,11 +40,4 @@ export function useMarkets(category?: string | null, limit: number = 50) {
   };
 }
 
-export function useMarketDetails(marketId: string | null) {
-  return useQuery<Market | null>({
-    queryKey: ['market', marketId],
-    queryFn: () => (marketId ? apiClient.getMarketDetails(marketId) : null),
-    enabled: !!marketId,
-    staleTime: 30000,
-  });
-}
+// Remove useMarketDetails as getMarketDetails is not implemented in generic client
