@@ -62,7 +62,19 @@ async def get_news_feed(
                     },
                     "related_markets": article.related_markets,
                     "category": article.category,
-                    "is_breaking": article.is_breaking
+                    "is_breaking": article.is_breaking,
+                    "signal_score": article.signal_score,
+                    "impact_details": [
+                        {
+                            "market_name": d.market_name,
+                            "platform": d.platform,
+                            "start_prob": d.start_prob,
+                            "end_prob": d.end_prob,
+                            "interpretation": d.interpretation,
+                            "market_url": d.market_url
+                        }
+                        for d in (article.impact_details or [])
+                    ]
                 }
                 for article in articles
             ],
@@ -103,7 +115,19 @@ async def get_news_article(
                     },
                     "related_markets": article.related_markets,
                     "category": article.category,
-                    "is_breaking": article.is_breaking
+                    "is_breaking": article.is_breaking,
+                    "signal_score": article.signal_score,
+                    "impact_details": [
+                        {
+                            "market_name": d.market_name,
+                            "platform": d.platform,
+                            "start_prob": d.start_prob,
+                            "end_prob": d.end_prob,
+                            "interpretation": d.interpretation,
+                            "market_url": d.market_url
+                        }
+                        for d in (article.impact_details or [])
+                    ]
                 }
 
         raise HTTPException(status_code=404, detail="Article not found")

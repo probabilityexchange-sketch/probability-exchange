@@ -5,12 +5,15 @@
 import { useState, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Header } from './components/Header';
+import LiveTicker from './components/LiveTicker';
 import { StatusBar } from './components/StatusBar';
 import { SearchBar } from './components/SearchBar';
 import { MarketGrid } from './components/MarketGrid';
 import { MarketStats, calculateMarketStats } from './components/MarketStats';
 import { MarketDetailModal } from './components/MarketDetailModal';
 import NewsFeed from './components/NewsFeed';
+import WhatToWatch from './components/WhatToWatch';
+import DashboardSnippet from './components/DashboardSnippet';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Sidebar, { MarketFilters } from './components/Sidebar';
 import { useMarkets } from './hooks/useMarkets';
@@ -53,7 +56,7 @@ function DashboardContent() {
   });
 
   // Favorites management
-  const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { favorites, toggleFavorite } = useFavorites();
 
   // Toast notifications
   const { toasts, removeToast, showBreaking } = useToast();
@@ -116,7 +119,7 @@ function DashboardContent() {
     const sorted = [...filtered];
     switch (marketFilters.sortBy) {
       case 'volume':
-        sorted.sort((a, b) => (b.volume || 0) - (a.volume || 0));
+        sorted.sort((a, b) => (b.volume_24h || 0) - (a.volume_24h || 0));
         break;
       case 'activity':
         sorted.sort((a, b) => (b.liquidity || 0) - (a.liquidity || 0));
@@ -195,6 +198,7 @@ function DashboardContent() {
           </button>
 
           <Header />
+          <LiveTicker />
 
           <StatusBar
             wsConnected={wsConnected}
@@ -214,14 +218,25 @@ function DashboardContent() {
             />
           )}
 
-          {/* News & AI Analysis Feed */}
-          <div id="news-feed" className="my-8">
-            <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Market News & AI Analysis
-            </h2>
-            <ErrorBoundary>
-              <NewsFeed limit={10} onBreakingNews={handleBreakingNews} />
-            </ErrorBoundary>
+          {/* Main Layout Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 my-8">
+            {/* News Feed - Takes up 2/3 on large screens */}
+            <div className="lg:col-span-2 space-y-8">
+              <div id="news-feed">
+                <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  Market News & AI Analysis
+                </h2>
+                <ErrorBoundary>
+                  <NewsFeed limit={10} onBreakingNews={handleBreakingNews} />
+                </ErrorBoundary>
+              </div>
+            </div>
+
+            {/* Sidebar Widgets - Takes up 1/3 on large screens */}
+            <div className="space-y-6">
+              <WhatToWatch />
+              <DashboardSnippet />
+            </div>
           </div>
 
           <SearchBar
