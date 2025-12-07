@@ -422,35 +422,50 @@ class ConnectionManager:
         """Background task to broadcast periodic market updates"""
         while True:
             try:
-                # Simulate market data updates
                 if market_aggregator:
-                    await self._send_mock_updates()
-                await asyncio.sleep(5)  # Update every 5 seconds
+                    # Fetch real market updates
+                    await self._send_real_updates()
+                else:
+                    logger.warning("Market aggregator not initialized, skipping updates")
+
+                await asyncio.sleep(15)  # Polling interval (15 seconds to avoid rate limits)
             except Exception as e:
                 logger.error(f"Error in market updates broadcast: {e}")
-                await asyncio.sleep(5)
+                await asyncio.sleep(15)
     
-    async def _send_mock_updates(self):
-        """Send mock market updates for demo"""
-        # Generate random market update
-        import random
-        market_ids = [f"market_{i}" for i in range(20)]
-        market_id = random.choice(market_ids)
-        
-        # Simulate price movement
-        price_change = random.uniform(-0.05, 0.05)
-        new_price = max(0.01, min(0.99, 0.5 + price_change))
-        
-        update = {
-            "id": market_id,
-            "platform": "polymarket",
-            "current_price": new_price,
-            "probability": new_price,
-            "volume_24h": 1000 + random.randint(0, 500),
-            "last_updated": datetime.utcnow().isoformat()
-        }
-        
-        await self.broadcast_market_update(update)
+    async def _send_real_updates(self):
+        """Fetch and broadcast real market updates"""
+        try:
+            # Fetch top markets from aggregator
+            # We limit to small number per platform to respect rate limits during polling
+            markets = await market_aggregator.get_all_markets(limit_per_platform=5)
+
+            for market in markets:
+                # Convert to dict for JSON serialization
+                market_data = {
+                    "id": market.id,
+                    "platform": market.platform,
+                    "question": market.question,
+                    "description": market.description,
+                    "category": market.category,
+                    "market_type": market.market_type,
+                    "outcomes": market.outcomes,
+                    "current_price": market.current_price,
+                    "probability": market.probability,
+                    "volume_24h": market.volume_24h,
+                    "total_volume": market.total_volume,
+                    "liquidity": market.liquidity,
+                    "status": market.status,
+                    "url": market.url,
+                    "last_updated": datetime.utcnow().isoformat()
+                }
+
+                await self.broadcast_market_update(market_data)
+                # Small delay to avoid flooding clients
+                await asyncio.sleep(0.05)
+
+        except Exception as e:
+            logger.error(f"Error fetching real market updates: {e}")
 
 # Global connection manager
 manager = ConnectionManager()
