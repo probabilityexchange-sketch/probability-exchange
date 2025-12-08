@@ -115,9 +115,43 @@ class MarketCorrelator:
     MARKET_KEYWORDS = {
         'crypto': ['bitcoin', 'btc', 'ethereum', 'eth', 'crypto', 'blockchain'],
         'politics': ['election', 'president', 'congress', 'senate', 'vote', 'political'],
-        'technology': ['ai', 'artificial intelligence', 'tech', 'apple', 'google', 'microsoft'],
-        'economy': ['fed', 'federal reserve', 'interest rate', 'inflation', 'gdp', 'economy'],
+        'technology': ['ai', 'artificial intelligence', 'tech', 'apple', 'google', 'microsoft', 'genmab'],
+        'economy': ['fed', 'federal reserve', 'interest rate', 'inflation', 'gdp', 'economy', 'oil'],
         'climate': ['climate', 'temperature', 'emissions', 'carbon', 'renewable']
+    }
+
+    # Specific ticker mappings for high-precision linking
+    SPECIFIC_TICKERS = {
+        'genmab': {
+            'name': 'Biotech Index ETF',
+            'platform': 'Kalshi',
+            'note': 'Sector impact on Biotech'
+        },
+        'bitcoin': {
+            'name': 'Bitcoin > $100k',
+            'platform': 'Polymarket',
+            'note': 'Direct crypto market correlation'
+        },
+        'ethereum': {
+            'name': 'ETH > $4k',
+            'platform': 'Polymarket',
+            'note': 'Direct crypto market correlation'
+        },
+        'fed': {
+            'name': 'Fed Rate Cut',
+            'platform': 'Kalshi',
+            'note': 'Monetary policy impact'
+        }
+    }
+
+    # Sector fallbacks
+    SECTOR_FALLBACKS = {
+        'crypto': {'name': 'Crypto Market Cap > 3T', 'platform': 'Polymarket'},
+        'politics': {'name': 'Generic Ballot 2024', 'platform': 'Polymarket'},
+        'technology': {'name': 'Nasdaq 100 > 20k', 'platform': 'Kalshi'},
+        'economy': {'name': 'US GDP Growth > 2%', 'platform': 'Kalshi'},
+        'climate': {'name': 'Global Temp Rise', 'platform': 'Kalshi'},
+        'general': {'name': 'S&P 500 > 5500', 'platform': 'Kalshi'}
     }
 
     @classmethod
@@ -139,6 +173,51 @@ class MarketCorrelator:
 
         primary = related[0] if related else 'general'
         return related, primary
+
+    @classmethod
+    def get_market_tickers(cls, title: str, description: str, category: str, sentiment: float) -> List[Dict]:
+        """
+        Get specific market tickers or fallbacks based on content
+        """
+        text = (title + ' ' + description).lower()
+        tickers = []
+
+        # 1. Check for specific keywords
+        for keyword, ticker_info in cls.SPECIFIC_TICKERS.items():
+            if keyword in text:
+                # Calculate probability impact based on sentiment
+                current_prob = 0.5
+                impact = sentiment * 0.1  # 10% swing max
+                new_prob = max(0.01, min(0.99, current_prob + impact))
+
+                tickers.append({
+                    'name': ticker_info['name'],
+                    'platform': ticker_info['platform'],
+                    'start': current_prob,
+                    'end': new_prob,
+                    'note': ticker_info['note']
+                })
+                # If we found a specific match, we might stop or continue to find more
+                # For now, let's just take the first strong match to avoid noise
+                if len(tickers) >= 2:
+                    break
+
+        # 2. Fallback to sector analysis if no specific tickers found
+        if not tickers:
+            fallback = cls.SECTOR_FALLBACKS.get(category, cls.SECTOR_FALLBACKS['general'])
+            current_prob = 0.5
+            impact = sentiment * 0.05 # Smaller swing for sector
+            new_prob = max(0.01, min(0.99, current_prob + impact))
+
+            tickers.append({
+                'name': fallback['name'],
+                'platform': fallback['platform'],
+                'start': current_prob,
+                'end': new_prob,
+                'note': f"Sector analysis: {category.capitalize()} impact"
+            })
+
+        return tickers
 
 
 class ImpactPredictor:
@@ -213,16 +292,22 @@ class NewsService:
 
     def _generate_mock_news(self) -> List[NewsArticle]:
         """Generate realistic mock news for demo"""
+        # Base mock articles
         mock_articles = [
+            {
+                'title': 'Genmab Announces Positive Phase 3 Trial Results',
+                'description': 'Biotech giant Genmab reveals groundbreaking data from latest oncology study. Shares expected to react positively.',
+                'source': 'Reuters',
+                'category': 'technology', # loosely tech/biotech
+                'hours_ago': 0.5,
+                # No 'tickers' provided here, forcing dynamic generation
+            },
             {
                 'title': 'Bitcoin Surges Past $95,000 as Institutional Demand Soars',
                 'description': 'Major investment firms increase crypto allocations as Bitcoin approaches six-figure milestone. Analysts predict continued momentum.',
                 'source': 'Bloomberg',
                 'category': 'crypto',
                 'hours_ago': 1,
-                'tickers': [
-                    {'name': 'Bitcoin > $100k (2024)', 'platform': 'Polymarket', 'start': 0.35, 'end': 0.42, 'note': 'Institutional inflows driving confidence'}
-                ]
             },
             {
                 'title': 'Federal Reserve Signals Potential Rate Cut in Q2 2025',
@@ -230,9 +315,6 @@ class NewsService:
                 'source': 'Reuters',
                 'category': 'economy',
                 'hours_ago': 3,
-                'tickers': [
-                    {'name': 'Fed Rate Cut Q2 2025', 'platform': 'Kalshi', 'start': 0.45, 'end': 0.60, 'note': 'Dovish comments increased cut probability'}
-                ]
             },
             {
                 'title': 'OpenAI Announces Major Breakthrough in AGI Research',
@@ -240,9 +322,6 @@ class NewsService:
                 'source': 'TechCrunch',
                 'category': 'technology',
                 'hours_ago': 5,
-                'tickers': [
-                    {'name': 'AGI by 2026', 'platform': 'Manifold', 'start': 0.20, 'end': 0.35, 'note': 'New model release accelerated timelines'}
-                ]
             },
             {
                 'title': '2024 Election Polls Show Tight Race in Key Swing States',
@@ -250,10 +329,6 @@ class NewsService:
                 'source': 'Associated Press',
                 'category': 'politics',
                 'hours_ago': 2,
-                'tickers': [
-                    {'name': 'Presidential Winner 2024', 'platform': 'Polymarket', 'start': 0.49, 'end': 0.51, 'note': 'Swing state polls tightened margin'},
-                    {'name': 'PA Winner', 'platform': 'Polymarket', 'start': 0.48, 'end': 0.48, 'note': 'Dead heat in PA'}
-                ]
             },
             {
                 'title': 'Global Temperatures Set New Record High in 2024',
@@ -261,9 +336,6 @@ class NewsService:
                 'source': 'BBC',
                 'category': 'climate',
                 'hours_ago': 6,
-                'tickers': [
-                     {'name': 'Avg Temp > 1.5C Increase', 'platform': 'Kalshi', 'start': 0.70, 'end': 0.85, 'note': 'New data confirms warming trend'}
-                ]
             },
             {
                 'title': 'Ethereum Upgrade Promises 10x Speed Improvement',
@@ -271,9 +343,6 @@ class NewsService:
                 'source': 'CoinDesk',
                 'category': 'crypto',
                 'hours_ago': 4,
-                'tickers': [
-                    {'name': 'ETH > $4k by June', 'platform': 'Polymarket', 'start': 0.25, 'end': 0.30, 'note': 'Technical upgrade boosts sentiment'}
-                ]
             },
             {
                 'title': 'Major Tech Layoffs Announced Across Silicon Valley',
@@ -281,7 +350,6 @@ class NewsService:
                 'source': 'Wall Street Journal',
                 'category': 'technology',
                 'hours_ago': 8,
-                'tickers': []
             },
             {
                 'title': 'Oil Prices Drop 15% on Demand Concerns',
@@ -289,9 +357,6 @@ class NewsService:
                 'source': 'Financial Times',
                 'category': 'economy',
                 'hours_ago': 12,
-                'tickers': [
-                     {'name': 'Oil < $70/bbl EOY', 'platform': 'Kalshi', 'start': 0.40, 'end': 0.65, 'note': 'Demand shock driving prices down'}
-                ]
             }
         ]
 
@@ -331,8 +396,10 @@ class NewsService:
             else:
                 signal_score = 0
 
-            # Create impact details
+            # Dynamic Ticker Generation (Fix for "No Signal")
             impact_details = []
+
+            # Use provided tickers if available (legacy support), otherwise generate dynamically
             if 'tickers' in mock:
                 for t in mock['tickers']:
                     impact_details.append(MarketTicker(
@@ -342,6 +409,27 @@ class NewsService:
                         end_prob=t['end'],
                         interpretation=t['note']
                     ))
+            else:
+                # Use MarketCorrelator to find tickers
+                generated_tickers = MarketCorrelator.get_market_tickers(
+                    mock['title'],
+                    mock['description'],
+                    primary_category,
+                    sentiment_score
+                )
+
+                for t in generated_tickers:
+                    impact_details.append(MarketTicker(
+                        market_name=t['name'],
+                        platform=t['platform'],
+                        start_prob=t['start'],
+                        end_prob=t['end'],
+                        interpretation=t['note']
+                    ))
+
+            # If we successfully linked tickers, boost signal score if it was low
+            if impact_details and signal_score == 0:
+                signal_score = 1 # At least low signal if linked
 
             # Create article
             published_at = datetime.utcnow() - timedelta(hours=mock['hours_ago'])
