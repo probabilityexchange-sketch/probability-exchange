@@ -51,6 +51,7 @@ class MarketData:
     volume_24h: float = 0.0
     total_volume: float = 0.0
     liquidity: float = 0.0
+    price_change_24h: float = 0.0  # Percentage change in last 24h (e.g., 0.05 for 5%)
     open_time: Optional[datetime] = None
     close_time: Optional[datetime] = None
     resolution_date: Optional[datetime] = None
@@ -261,6 +262,7 @@ class MockMarketClient(BaseAPIClient):
                 volume_24h=125000,
                 total_volume=2500000,
                 liquidity=500000,
+                price_change_24h=0.12,
                 status="open",
                 url=f"https://{self.platform}.com/markets/btc-100k",
                 last_updated=datetime.utcnow()
@@ -276,6 +278,7 @@ class MockMarketClient(BaseAPIClient):
                 volume_24h=85000,
                 total_volume=1200000,
                 liquidity=300000,
+                price_change_24h=-0.08,
                 status="open",
                 url=f"https://{self.platform}.com/markets/eth-5k",
                 last_updated=datetime.utcnow()
@@ -291,6 +294,7 @@ class MockMarketClient(BaseAPIClient):
                 volume_24h=450000,
                 total_volume=8500000,
                 liquidity=1200000,
+                price_change_24h=0.05,
                 status="open",
                 url=f"https://{self.platform}.com/markets/election-2024",
                 last_updated=datetime.utcnow()
@@ -306,6 +310,7 @@ class MockMarketClient(BaseAPIClient):
                 volume_24h=95000,
                 total_volume=1500000,
                 liquidity=400000,
+                price_change_24h=0.03,
                 status="open",
                 url=f"https://{self.platform}.com/markets/agi-2027",
                 last_updated=datetime.utcnow()
@@ -321,6 +326,7 @@ class MockMarketClient(BaseAPIClient):
                 volume_24h=65000,
                 total_volume=950000,
                 liquidity=250000,
+                price_change_24h=-0.01,
                 status="open",
                 url=f"https://{self.platform}.com/markets/climate-1-5c",
                 last_updated=datetime.utcnow()
@@ -412,6 +418,7 @@ class PolymarketRealClient(BaseAPIClient):
                     volume_24h=market.get('volume24Hours', 0),
                     total_volume=market.get('volume', 0),
                     liquidity=market.get('liquidity', 0),
+                    price_change_24h=market.get('priceChange24h', 0.0), # Assuming API returns this or we default to 0
                     open_time=self._parse_datetime(market.get('startDate')),
                     close_time=self._parse_datetime(market.get('endDate')),
                     resolution_date=self._parse_datetime(market.get('resolutionDate')),
@@ -569,6 +576,7 @@ class KalshiRealClient(BaseAPIClient):
                     volume_24h=market_data.get('volume_24h', 0),
                     total_volume=market_data.get('total_volume', 0),
                     liquidity=market_data.get('open_interest', 0),
+                    price_change_24h=0.0, # Kalshi API change field TBD
                     open_time=self._parse_timestamp(market_data.get('open_time')),
                     close_time=self._parse_timestamp(market_data.get('close_time')),
                     resolution_date=self._parse_timestamp(market_data.get('expiration_time')),
@@ -604,6 +612,7 @@ class KalshiRealClient(BaseAPIClient):
                 volume_24h=market_data.get('volume_24h', 0),
                 total_volume=market_data.get('total_volume', 0),
                 liquidity=market_data.get('open_interest', 0),
+                price_change_24h=0.0, # Kalshi API change field TBD
                 open_time=self._parse_timestamp(market_data.get('open_time')),
                 close_time=self._parse_timestamp(market_data.get('close_time')),
                 resolution_date=self._parse_timestamp(market_data.get('expiration_time')),
@@ -720,6 +729,7 @@ class ManifoldRealClient(BaseAPIClient):
                     volume_24h=market_data.get('volume24Hours', 0),
                     total_volume=market_data.get('volume', 0),
                     liquidity=market_data.get('totalLiquidity', 0),
+                    price_change_24h=market_data.get('probChanges', {}).get('day', 0.0), # Manifold often provides this
                     open_time=self._parse_datetime(market_data.get('createdTime')),
                     close_time=self._parse_datetime(market_data.get('closeTime')),
                     status='open' if not market_data.get('isResolved') else 'resolved',
@@ -764,6 +774,7 @@ class ManifoldRealClient(BaseAPIClient):
                 volume_24h=market_data.get('volume24Hours', 0),
                 total_volume=market_data.get('volume', 0),
                 liquidity=market_data.get('totalLiquidity', 0),
+                price_change_24h=market_data.get('probChanges', {}).get('day', 0.0),
                 open_time=self._parse_datetime(market_data.get('createdTime')),
                 close_time=self._parse_datetime(market_data.get('closeTime')),
                 status='open' if not market_data.get('isResolved') else 'resolved',
@@ -948,7 +959,7 @@ class PredictionMarketAggregator:
                 logger.warning(f"API key not configured for {platform}. Using mock client.")
                 self.clients[platform] = MockMarketClient(platform)
                 
-    async def get_all_markets(self, category: Optional[str] = None, limit_per_platform: int = 50) -> List[MarketData]:
+    async def get_all_markets(self, category: Optional[str] = None, limit_per_platform: int = 50, sort_by: str = "volume") -> List[MarketData]:
         """Get markets from all configured platforms"""
         all_markets: List[MarketData] = []
         
@@ -972,8 +983,13 @@ class PredictionMarketAggregator:
                 market.platform = platform # Ensure platform is correctly set
             all_markets.extend(markets)
         
-        # Sort by volume (descending)
-        all_markets.sort(key=lambda x: x.volume_24h, reverse=True)
+        # Sort based on criteria
+        if sort_by == "movers":
+            # Sort by absolute price change (biggest movers up or down)
+            all_markets.sort(key=lambda x: abs(x.price_change_24h), reverse=True)
+        else:
+            # Default to volume
+            all_markets.sort(key=lambda x: x.volume_24h, reverse=True)
         
         return all_markets
     
