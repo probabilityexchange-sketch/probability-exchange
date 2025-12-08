@@ -261,16 +261,28 @@ async def initialize_aggregator():
 async def get_markets(
     category: Optional[str] = None,
     limit: int = 50,
+    sort_by: str = "volume",
     aggregator: PredictionMarketAggregator = Depends(get_market_aggregator)
 ):
-    """Get aggregated markets from all platforms"""
+    """
+    Get aggregated markets from all platforms
+
+    Query Parameters:
+        category: Filter by category
+        limit: Max number of markets to return
+        sort_by: Sort criteria ("volume", "movers")
+    """
     try:
         markets = await aggregator.get_all_markets(
             category=category,
-            limit_per_platform=limit // 3  # Divide limit across platforms
+            limit_per_platform=limit // 3 if limit > 5 else 5,  # Adjust limit logic
+            sort_by=sort_by
         )
         
         # Convert to dictionaries for JSON serialization
+        # Ensure we slice the final list by limit as aggregator might return more
+        markets = markets[:limit]
+
         return {
             "markets": [
                 {
@@ -286,6 +298,7 @@ async def get_markets(
                     "volume_24h": market.volume_24h,
                     "total_volume": market.total_volume,
                     "liquidity": market.liquidity,
+                    "change_24h": market.price_change_24h, # Include change data
                     "status": market.status,
                     "url": market.url,
                     "last_updated": market.last_updated.isoformat() if market.last_updated else None

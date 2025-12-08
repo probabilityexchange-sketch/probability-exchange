@@ -27,7 +27,7 @@ export interface Market {
 
   // Volume & Trading
   volume_24h?: number;
-  change_24h?: number;
+  change_24h?: number; // 24h price change percentage (e.g., 0.05 for 5%)
   total_volume?: number;
   liquidity?: number;
 
