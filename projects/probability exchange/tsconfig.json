@@ -22,5 +22,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "packages", "archive", ".venv", "venv"]
+  "exclude": ["node_modules", "packages", "archive", ".venv", "venv", "market-pulse-dashboard", "waitlist_landing_page", "consensus_dashboard", "backend"]
 }
