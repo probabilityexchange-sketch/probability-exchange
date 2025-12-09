@@ -1,7 +1,9 @@
+
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm install && npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install",
+  "buildCommand": "cd projects/probability-exchange && npm run build",
+  "outputDirectory": "projects/probability-exchange/.next",
+  "installCommand": "cd projects/probability-exchange && npm install",
   "framework": "nextjs"
 }
+
