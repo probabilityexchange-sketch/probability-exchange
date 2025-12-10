@@ -92,7 +92,13 @@ class Settings(BaseSettings):
     
     # Development Settings
     cors_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"],
+        default=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:8000"
+        ],
         env="CORS_ORIGINS"
     )
     allowed_hosts: List[str] = Field(

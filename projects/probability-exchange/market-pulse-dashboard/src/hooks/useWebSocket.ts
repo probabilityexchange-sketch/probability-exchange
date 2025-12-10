@@ -12,6 +12,16 @@ interface UseWebSocketReturn {
   lastMessage: Market | null;
 }
 
+const getWebSocketUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    // Replace http/https with ws/wss
+    const wsUrl = envUrl.replace(/^http/, 'ws');
+    return `${wsUrl}/ws`;
+  }
+  return 'ws://localhost:8000/ws';
+};
+
 export function useWebSocket(
   onMessage?: (market: Market) => void,
   url?: string
@@ -24,7 +34,8 @@ export function useWebSocket(
   useEffect(() => {
     // Initialize WebSocket manager
     // Pass onMessage callback to constructor as per our mock implementation
-    const manager = new WebSocketManager(url || 'ws://localhost:8000/ws', (data) => {
+    const targetUrl = url || getWebSocketUrl();
+    const manager = new WebSocketManager(targetUrl, (data) => {
          setLastMessage(data);
          if (onMessage) onMessage(data);
     });
