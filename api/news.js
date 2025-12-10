@@ -61,7 +61,7 @@ export default async function handler(req, res) {
       });
     }
 
-    res.status(200).json(news);
+    res.status(200).json({ articles: news });
 
   } catch (error) {
     console.error('News API Error:', error);

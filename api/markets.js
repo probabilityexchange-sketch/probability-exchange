@@ -100,7 +100,7 @@ export default async function handler(req, res) {
     }
 
     // Return aggregated markets
-    res.status(200).json(markets);
+    res.status(200).json({ markets: markets });
 
   } catch (error) {
     console.error('API Error:', error);

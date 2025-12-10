@@ -1,5 +1,0 @@
-{
-  "buildCommand": "echo 'Using pre-built files'",
-  "outputDirectory": "../../public",
-  "installCommand": "echo 'No dependencies needed'"
-}
