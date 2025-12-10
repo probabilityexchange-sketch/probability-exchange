@@ -93,12 +93,29 @@ The deployed dashboard includes:
 - Built into the bundled React app
 - Would require rebuilding from source
 
-### What Was Disabled/Stubbed
+### Live Data Sources (Serverless API)
 
-Based on the build:
-- **Real-time Data**: May be using mock/static data
-- **Live WebSocket**: WebSocket client exists but may not be connected
-- **External APIs**: No API keys configured in deployment
+The dashboard now uses **live data** via Vercel serverless functions:
+
+#### `/api/v1/markets` → Fetches from:
+- **Polymarket**: Top 10 active markets by volume from `https://clob.polymarket.com/markets`
+- **Kalshi**: Top 5 active markets from `https://trading-api.kalshi.com/trade-api/v2/markets`
+- Returns aggregated market data with:
+  - Market ID, title, description
+  - Current probability
+  - Volume and liquidity
+  - Source (Polymarket/Kalshi)
+  - Category, end date, URLs
+
+#### `/api/v1/news` → Fetches from:
+- **NewsAPI** (if `NEWSAPI_KEY` env var set)
+- Searches for: "prediction markets", "polymarket", "kalshi", "betting markets"
+- Returns latest 10 articles with titles, summaries, sources, timestamps
+
+#### What's Still Missing:
+- **WebSocket**: Real-time updates (would need separate WebSocket server)
+- **Historical Data**: Price history charts (APIs don't provide this easily)
+- **AI Analysis**: Market analysis/predictions (would need LLM API integration)
 
 ### Deployment Process
 
