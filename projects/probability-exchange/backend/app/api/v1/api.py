@@ -91,6 +91,7 @@ from app.core.config_simple import settings
 
 # Import news router
 from .news import news_router
+from .dflow_trading import dflow_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -101,6 +102,7 @@ api_router = APIRouter()
 
 # Include news routes
 api_router.include_router(news_router, tags=["news"])
+api_router.include_router(dflow_router, prefix="/dflow", tags=["dflow"])
 
 # Global aggregator instance (will be initialized on startup)
 market_aggregator: Optional[PredictionMarketAggregator] = None
