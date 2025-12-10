@@ -2,7 +2,8 @@
 
 # Market Pulse Pro Backend Startup Script
 
-BACKEND_DIR="/home/billy/projects/probability exchange/backend"
+# Get the directory where the script is located
+BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="/tmp/backend.log"
 
 echo "==========================================="
@@ -11,13 +12,13 @@ echo "==========================================="
 echo ""
 
 # Check if backend is already running
-if pgrep -f "uvicorn app.main_simple:app" > /dev/null; then
+if pgrep -f "uvicorn app.main:app" > /dev/null; then
     echo "⚠️  Backend is already running!"
     echo ""
     echo "Process info:"
-    ps aux | grep "uvicorn app.main_simple" | grep -v grep
+    ps aux | grep "uvicorn app.main:app" | grep -v grep
     echo ""
-    echo "To stop: pkill -f 'uvicorn app.main_simple'"
+    echo "To stop: pkill -f 'uvicorn app.main:app'"
     exit 1
 fi
 
@@ -26,7 +27,7 @@ cd "$BACKEND_DIR" || exit 1
 
 # Start backend
 echo "Starting backend on http://localhost:8000..."
-nohup python3 -m uvicorn app.main_simple:app --host 0.0.0.0 --port 8000 --reload > "$LOG_FILE" 2>&1 &
+nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload > "$LOG_FILE" 2>&1 &
 
 # Wait for startup
 echo "Waiting for backend to start..."
@@ -51,7 +52,7 @@ if curl -s http://localhost:8000/health > /dev/null; then
     echo "Useful Commands"
     echo "==========================================="
     echo "View logs: tail -f $LOG_FILE"
-    echo "Stop backend: pkill -f 'uvicorn app.main_simple'"
+    echo "Stop backend: pkill -f 'uvicorn app.main:app'"
     echo "API docs: open http://localhost:8000/docs"
     echo ""
 else
