@@ -1,0 +1,7 @@
+{
+  "name": "probability-exchange",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'Using pre-built files from ../../public/'"
+  }
+}
