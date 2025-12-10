@@ -2,8 +2,9 @@
 
 # Market Pulse Pro Backend Startup Script
 
-# Get the directory where the script is located
-BACKEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Determine the directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+BACKEND_DIR="$SCRIPT_DIR"
 LOG_FILE="/tmp/backend.log"
 
 echo "==========================================="
@@ -24,6 +25,16 @@ fi
 
 # Navigate to backend directory
 cd "$BACKEND_DIR" || exit 1
+
+# Check for .env file, copy from .env.example if missing
+if [ ! -f ".env" ]; then
+    if [ -f ".env.example" ]; then
+        echo "Creating .env from .env.example..."
+        cp .env.example .env
+    else
+        echo "⚠️  .env file not found and .env.example missing!"
+    fi
+fi
 
 # Start backend
 echo "Starting backend on http://localhost:8000..."

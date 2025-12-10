@@ -77,6 +77,8 @@ class Settings(BaseSettings):
     prometheus_port: int = Field(default=9090, env="PROMETHEUS_PORT")
     
     # Compliance Settings
+    allowed_jurisdictions: List[str] = Field(default=["NV", "NJ", "DE"], env="ALLOWED_JURISDICTIONS")
+    blocked_jurisdictions: List[str] = Field(default=["IL", "WA", "OR", "MT"], env="BLOCKED_JURISDICTIONS")
     allowed_jurisdictions: List[str] = Field(default=["NV","NJ","DE"], env="ALLOWED_JURISDICTIONS")
     blocked_jurisdictions: List[str] = Field(default=["IL","WA","OR","MT"], env="BLOCKED_JURISDICTIONS")
     min_age: int = Field(default=18, env="MIN_AGE")
@@ -149,9 +151,11 @@ class Settings(BaseSettings):
         return self.blocked_jurisdictions
     
     class Config:
-        env_file = ".env"
+        # Load from .env.example first, then override with .env if it exists
+        env_file = (".env.example", ".env")
         case_sensitive = False
         extra = "ignore"
+        # env_prefix = "MARKETPULSE_"
 
 # Global settings instance
 settings = Settings()
