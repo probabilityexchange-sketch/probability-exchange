@@ -79,6 +79,8 @@ class Settings(BaseSettings):
     # Compliance Settings
     allowed_jurisdictions: List[str] = Field(default=["NV", "NJ", "DE"], env="ALLOWED_JURISDICTIONS")
     blocked_jurisdictions: List[str] = Field(default=["IL", "WA", "OR", "MT"], env="BLOCKED_JURISDICTIONS")
+    allowed_jurisdictions: List[str] = Field(default=["NV","NJ","DE"], env="ALLOWED_JURISDICTIONS")
+    blocked_jurisdictions: List[str] = Field(default=["IL","WA","OR","MT"], env="BLOCKED_JURISDICTIONS")
     min_age: int = Field(default=18, env="MIN_AGE")
     kyc_required_threshold: float = Field(default=1000.00, env="KYC_REQUIRED_THRESHOLD")
     
