@@ -33,14 +33,19 @@ export default async function handler(req, res) {
         topMarkets.forEach(market => {
           markets.push({
             id: `polymarket-${market.condition_id}`,
+            question: market.question, // Frontend expects 'question' or 'title'
             title: market.question,
             description: market.description || market.question,
             probability: parseFloat(market.outcome_prices?.[0] || 0),
             volume: parseFloat(market.volume || 0),
             liquidity: parseFloat(market.liquidity || 0),
             change_24h: getChange(),
+            volume_24h: parseFloat(market.volume || 0) * 0.1, // Mock 24h volume
+            total_volume: parseFloat(market.volume || 0),
             source: 'Polymarket',
+            platform: 'Polymarket', // Frontend STRICTLY expects 'platform'
             category: market.category || 'Politics',
+            market_type: 'Binary',
             endDate: market.end_date_iso || market.end_date,
             lastUpdate: new Date().toISOString(),
             url: `https://polymarket.com/event/${market.slug}`,
@@ -66,14 +71,19 @@ export default async function handler(req, res) {
               const yesPrice = market.yes_sub_title ? parseFloat(market.last_price) / 100 : 0.5;
               markets.push({
                 id: `kalshi-${market.ticker}`,
+                question: market.title,
                 title: market.title,
                 description: market.subtitle || market.title,
                 probability: yesPrice,
                 volume: market.volume || 0,
                 liquidity: market.open_interest || 0,
                 change_24h: getChange(),
+                volume_24h: (market.volume || 0) * 0.1,
+                total_volume: market.volume || 0,
                 source: 'Kalshi',
+                platform: 'Kalshi', // Frontend STRICTLY expects 'platform'
                 category: market.category || 'Finance',
+                market_type: 'Binary',
                 endDate: market.expiration_time,
                 lastUpdate: new Date().toISOString(),
                 url: `https://kalshi.com/markets/${market.ticker}`,
@@ -93,14 +103,19 @@ export default async function handler(req, res) {
       const mockMarkets = [
         {
           id: 'mock-1',
+          question: 'Will Bitcoin hit $100k by 2025?',
           title: 'Will Bitcoin hit $100k by 2025?',
           description: 'Prediction market for BTC price action.',
           probability: 0.65,
           volume: 1500000,
+          volume_24h: 150000,
+          total_volume: 1500000,
           liquidity: 500000,
           change_24h: 0.05,
           source: 'Polymarket',
+          platform: 'Polymarket',
           category: 'Crypto',
+          market_type: 'Binary',
           endDate: '2024-12-31T23:59:59Z',
           lastUpdate: new Date().toISOString(),
           url: 'https://polymarket.com',
@@ -108,14 +123,19 @@ export default async function handler(req, res) {
         },
         {
           id: 'mock-2',
+          question: 'Fed Interest Rate Cut in September?',
           title: 'Fed Interest Rate Cut in September?',
           description: 'Market consensus on Federal Reserve policy.',
           probability: 0.30,
           volume: 800000,
+          volume_24h: 80000,
+          total_volume: 800000,
           liquidity: 200000,
           change_24h: -0.02,
           source: 'Kalshi',
+          platform: 'Kalshi',
           category: 'Economy',
+          market_type: 'Binary',
           endDate: '2024-09-30T23:59:59Z',
           lastUpdate: new Date().toISOString(),
           url: 'https://kalshi.com',
@@ -123,14 +143,19 @@ export default async function handler(req, res) {
         },
         {
           id: 'mock-3',
+          question: '2024 US Presidential Election Winner',
           title: '2024 US Presidential Election Winner',
           description: 'Who will win the 2024 US Election?',
           probability: 0.48,
           volume: 5000000,
+          volume_24h: 500000,
+          total_volume: 5000000,
           liquidity: 1200000,
           change_24h: 0.01,
           source: 'Polymarket',
+          platform: 'Polymarket',
           category: 'Politics',
+          market_type: 'Binary',
           endDate: '2024-11-05T23:59:59Z',
           lastUpdate: new Date().toISOString(),
           url: 'https://polymarket.com',
@@ -150,12 +175,17 @@ export default async function handler(req, res) {
       markets: [
         {
           id: 'error-fallback',
+          question: 'System Maintenance: Using Cached Data',
           title: 'System Maintenance: Using Cached Data',
           probability: 0.5,
           volume: 0,
+          volume_24h: 0,
+          total_volume: 0,
           change_24h: 0,
           source: 'System',
+          platform: 'System',
           category: 'Maintenance',
+          market_type: 'Binary',
           lastUpdate: new Date().toISOString()
         }
       ] 

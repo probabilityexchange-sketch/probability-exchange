@@ -14,6 +14,19 @@ export default async function handler(req, res) {
   try {
     const news = [];
 
+    // Helper to mock impact data
+    const getImpact = () => ({
+      score: Math.random(),
+      confidence: Math.random() * 0.5 + 0.5,
+      predicted_direction: Math.random() > 0.5 ? 'up' : 'down'
+    });
+
+    // Helper to mock sentiment object
+    const getSentiment = () => ({
+      label: Math.random() > 0.6 ? 'positive' : (Math.random() > 0.5 ? 'negative' : 'neutral'),
+      score: Math.random()
+    });
+
     // Fetch from NewsAPI (you'll need to add NEWSAPI_KEY env var in Vercel)
     const newsApiKey = process.env.NEWSAPI_KEY;
 
@@ -31,13 +44,17 @@ export default async function handler(req, res) {
               news.push({
                 id: `news-${index}`,
                 title: article.title,
-                summary: article.description || article.content?.substring(0, 200) + '...',
+                description: article.description || article.content?.substring(0, 200) + '...',
                 source: article.source.name,
-                timestamp: article.publishedAt,
-                sentiment: 'neutral', // Would need sentiment analysis API
-                relevantMarkets: [], // Would need to match against markets
+                published_at: article.publishedAt,
+                sentiment: getSentiment(),
+                impact: getImpact(),
+                impact_details: [],
+                relevantMarkets: [], 
                 url: article.url,
-                imageUrl: article.urlToImage
+                imageUrl: article.urlToImage,
+                is_breaking: index === 0, // Mock breaking news for the first item
+                signal_score: Math.floor(Math.random() * 3) + 1
               });
             });
           }
@@ -53,11 +70,37 @@ export default async function handler(req, res) {
       news.push({
         id: 'default-1',
         title: 'Prediction Markets Gaining Mainstream Attention',
-        summary: 'Prediction markets like Polymarket and Kalshi are seeing increased volume and user adoption.',
+        description: 'Prediction markets like Polymarket and Kalshi are seeing increased volume and user adoption as traders seek to hedge real-world events.',
         source: 'Market Analysis',
-        timestamp: new Date().toISOString(),
-        sentiment: 'positive',
-        relevantMarkets: []
+        published_at: new Date().toISOString(),
+        sentiment: { label: 'positive', score: 0.8 },
+        impact: { score: 0.7, confidence: 0.9, predicted_direction: 'up' },
+        impact_details: [
+            {
+                platform: 'Polymarket',
+                market_name: 'Global Crypto Adoption',
+                interpretation: 'Positive sentiment drives volume.',
+                start_prob: 0.4,
+                end_prob: 0.6,
+                market_url: '#'
+            }
+        ],
+        relevantMarkets: [],
+        is_breaking: true,
+        signal_score: 3
+      });
+      news.push({
+        id: 'default-2',
+        title: 'Regulatory Landscape Shifts for Event Contracts',
+        description: 'New guidelines from the CFTC could impact how event contracts are listed and traded in the US markets.',
+        source: 'Regulatory Watch',
+        published_at: new Date(Date.now() - 3600000).toISOString(),
+        sentiment: { label: 'neutral', score: 0.5 },
+        impact: { score: 0.4, confidence: 0.7, predicted_direction: 'neutral' },
+        impact_details: [],
+        relevantMarkets: [],
+        is_breaking: false,
+        signal_score: 2
       });
     }
 
@@ -68,7 +111,8 @@ export default async function handler(req, res) {
     res.status(500).json({
       error: 'Internal server error',
       message: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      articles: [] // Ensure articles array exists even on error
     });
   }
 }
