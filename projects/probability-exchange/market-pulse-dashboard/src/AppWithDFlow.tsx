@@ -19,6 +19,7 @@ import DashboardSnippet from './components/DashboardSnippet';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Sidebar, { MarketFilters } from './components/Sidebar';
 import { DFlowTradingPanel } from './components/DFlowTradingPanel';
+import { HealthCheck } from './components/HealthCheck';
 import { useMarkets } from './hooks/useMarkets';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useFavorites } from './hooks/useFavorites';
@@ -153,6 +154,9 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-dark-bg text-white overflow-x-hidden overflow-y-auto m-0 p-0" style={{ margin: 0, padding: 0, position: 'relative', top: 0 }}>
+      {/* Backend Health Check */}
+      <HealthCheck />
+
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary-500/10 rounded-full blur-[120px] opacity-60" />
