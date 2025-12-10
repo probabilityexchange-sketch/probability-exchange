@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   try {
     const markets = [];
 
-    // Helper to generate random 24h change
+    // Helper to generate random 24h change (simulation)
     const getChange = () => (Math.random() * 0.2) - 0.1; // +/- 10%
 
     // Fetch from Polymarket
@@ -25,33 +25,49 @@ export default async function handler(req, res) {
 
       if (polymarketRes.ok) {
         const polymarketData = await polymarketRes.json();
-        const topMarkets = polymarketData
+        
+        // Check if response has 'data' property (standard Polymarket response) or is array
+        const rawMarkets = Array.isArray(polymarketData) ? polymarketData : (polymarketData.data || []);
+
+        const topMarkets = rawMarkets
           .filter(m => m.active && !m.closed)
-          .sort((a, b) => parseFloat(b.volume || 0) - parseFloat(a.volume || 0))
+          // Sort by volume if available, fallback to liquidity or other metric
+          .sort((a, b) => {
+             const volA = parseFloat(a.volume || 0);
+             const volB = parseFloat(b.volume || 0);
+             return volB - volA;
+          })
           .slice(0, 10);
 
         topMarkets.forEach(market => {
-          const prob = parseFloat(market.outcome_prices?.[0] || 0);
+          // Polymarket price is often in 'tokens' array or 'outcome_prices'
+          let prob = 0.5;
+          if (market.tokens && market.tokens[0] && market.tokens[0].price) {
+             prob = parseFloat(market.tokens[0].price);
+          } else if (market.outcome_prices && market.outcome_prices[0]) {
+             prob = parseFloat(market.outcome_prices[0]);
+          }
+
           markets.push({
             id: `polymarket-${market.condition_id}`,
             question: market.question,
             title: market.question,
             description: market.description || market.question,
             probability: prob,
-            current_price: prob, // REQUIRED by frontend v1 component
+            current_price: prob,
             volume: parseFloat(market.volume || 0),
             liquidity: parseFloat(market.liquidity || 0),
-            change_24h: getChange(),
-            volume_24h: parseFloat(market.volume || 0) * 0.1,
+            change_24h: getChange(), // Still simulated as 24h change isn't in this endpoint
+            volume_24h: parseFloat(market.volume || 0) * 0.05, // Simulated 24h volume
             total_volume: parseFloat(market.volume || 0),
             source: 'Polymarket',
             platform: 'Polymarket',
             category: market.category || 'Politics',
             market_type: 'Binary',
             endDate: market.end_date_iso || market.end_date,
-            close_time: market.end_date_iso || market.end_date, // Frontend looks for close_time
-            last_updated: new Date().toISOString(), // Frontend looks for last_updated
-            url: `https://polymarket.com/event/${market.slug}`,
+            close_time: market.end_date_iso || market.end_date,
+            last_updated: new Date().toISOString(),
+            url: `https://polymarket.com/event/${market.market_slug || market.slug}`,
             priceHistory: []
           });
         });
@@ -62,39 +78,49 @@ export default async function handler(req, res) {
 
     // Fetch from Kalshi
     try {
-      const kalshiRes = await fetch('https://trading-api.kalshi.com/trade-api/v2/markets', {
+      // UPDATED ENDPOINT: The old trading-api endpoint is deprecated. 
+      // Using the new elections endpoint which seems open, or falling back to public data.
+      const kalshiRes = await fetch('https://api.elections.kalshi.com/trade-api/v2/markets?limit=20', {
         headers: { 'Accept': 'application/json' }
       });
 
       if (kalshiRes.ok) {
         const kalshiData = await kalshiRes.json();
+        
         if (kalshiData.markets) {
-          kalshiData.markets.slice(0, 5).forEach(market => {
-            if (market.status === 'active') {
-              const yesPrice = market.yes_sub_title ? parseFloat(market.last_price) / 100 : 0.5;
-              markets.push({
-                id: `kalshi-${market.ticker}`,
-                question: market.title,
-                title: market.title,
-                description: market.subtitle || market.title,
-                probability: yesPrice,
-                current_price: yesPrice, // REQUIRED by frontend v1 component
-                volume: market.volume || 0,
-                liquidity: market.open_interest || 0,
-                change_24h: getChange(),
-                volume_24h: (market.volume || 0) * 0.1,
-                total_volume: market.volume || 0,
-                source: 'Kalshi',
-                platform: 'Kalshi',
-                category: market.category || 'Finance',
-                market_type: 'Binary',
-                endDate: market.expiration_time,
-                close_time: market.expiration_time, // Frontend looks for close_time
-                last_updated: new Date().toISOString(), // Frontend looks for last_updated
-                url: `https://kalshi.com/markets/${market.ticker}`,
-                priceHistory: []
-              });
-            }
+          // Filter for active markets and take top 10
+          const activeMarkets = kalshiData.markets
+             .filter(m => m.status === 'active' || m.status === 'open')
+             .slice(0, 10);
+
+          activeMarkets.forEach(market => {
+            // Kalshi prices are in cents (1-99), need to convert to decimal 0.01-0.99
+            // 'last_price' is integer cents.
+            const lastPrice = market.last_price || 50; 
+            const prob = lastPrice / 100;
+
+            markets.push({
+              id: `kalshi-${market.ticker}`,
+              question: market.title,
+              title: market.title,
+              description: market.subtitle || market.title,
+              probability: prob,
+              current_price: prob,
+              volume: market.volume || 0,
+              liquidity: market.liquidity || market.open_interest || 0,
+              change_24h: getChange(), // Simulated
+              volume_24h: (market.volume || 0) * 0.1,
+              total_volume: market.volume || 0,
+              source: 'Kalshi',
+              platform: 'Kalshi',
+              category: market.category || 'Finance',
+              market_type: 'Binary',
+              endDate: market.expiration_time,
+              close_time: market.expiration_time,
+              last_updated: new Date().toISOString(),
+              url: `https://kalshi.com/markets/${market.ticker}`,
+              priceHistory: []
+            });
           });
         }
       }
@@ -102,10 +128,15 @@ export default async function handler(req, res) {
       console.error('Kalshi fetch error:', error.message);
     }
 
-    // Fallback Mock Data if external APIs fail
-    if (markets.length === 0) {
-      console.log('Using fallback mock data');
-      const mockMarkets = [
+    // Return aggregated markets if any found
+    if (markets.length > 0) {
+       res.status(200).json({ markets: markets });
+       return;
+    }
+
+    // Fallback Mock Data ONLY if absolutely no live data could be fetched
+    console.log('Using fallback mock data');
+    const mockMarkets = [
         {
           id: 'mock-1',
           question: 'Will Bitcoin hit $100k by 2025?',
@@ -172,16 +203,11 @@ export default async function handler(req, res) {
           url: 'https://polymarket.com',
           priceHistory: []
         }
-      ];
-      return res.status(200).json({ markets: mockMarkets });
-    }
-
-    // Return aggregated markets
-    res.status(200).json({ markets: markets });
+    ];
+    res.status(200).json({ markets: mockMarkets });
 
   } catch (error) {
     console.error('API Error:', error);
-    // Even on crash, try to return mock data to keep frontend alive
     res.status(200).json({ 
       markets: [
         {
